@@ -1,0 +1,67 @@
+# Node.js and npm/yarn
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+.yarn/
+/pids
+/logs
+/tmp
+/upload
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build output
+/dist
+/build
+/out
+/public/build
+/public/dist
+
+# IDEs and Editors
+.idea/             # IntelliJ IDEA
+.vscode/           # VS Code (if not sharing config)
+*.swp              # Vim swap files
+*.bak              # Backup files
+*.sublime-project
+*.sublime-workspace
+.project           # Eclipse
+.classpath
+.settings/
+
+# OS-generated files
+.DS_Store          # macOS
+Thumbs.db          # Windows
+ehthumbs.db        # Windows
+Desktop.ini        # Windows
+*.db               # SQLite, etc. (if not tracked deliberately)
+
+# Test and Coverage
+/coverage
+/.nyc_output
+/test_results
+
+# Specific to Vite / React
+.vite/
+/storybook-static # If you use Storybook
+
+# Specific to your Node.js backend
+# Database files (if local, unversioned dbs like SQLite, or MongoDB data dir)
+/data/db/
+/db.*
+*.sqlite3
+
+# Uploaded files (if your app handles file uploads and stores them locally)
+/uploads/
+
+# Any specific logs or temp files your application might generate
+*.log
+*.log.*
+.DS_Store
