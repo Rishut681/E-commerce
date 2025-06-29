@@ -308,14 +308,6 @@ const DashboardNavbar = () => {
     }
   };
 
-  const handleLogout = () => {
-    alert('Logged out!');
-    // When connecting backend later, uncomment these lines:
-    // localStorage.removeItem('authToken');
-    // localStorage.removeItem('userID');
-    navigate('/login'); // Still navigate to login for frontend flow
-  };
-
   const handleNavigation = (path) => {
     navigate(path);
     setShowMobileSidebar(false); // Close sidebar on navigation
@@ -415,7 +407,7 @@ const DashboardNavbar = () => {
                     <DropdownItem onClick={() => handleNavigation('/settings')}>
                       <FaCog /> Settings
                     </DropdownItem>
-                    <DropdownItem onClick={handleLogout}>
+                    <DropdownItem onClick={logout}>
                       <FaSignOutAlt /> Logout
                     </DropdownItem>
                   </>
@@ -472,7 +464,7 @@ const DashboardNavbar = () => {
                   <MobileNavLinkItem onClick={() => handleNavigation('/settings')}>
                     <FaCog /> Settings
                   </MobileNavLinkItem>
-                  <MobileNavLinkItem onClick={handleLogout}>
+                  <MobileNavLinkItem onClick={logout}>
                     <FaSignOutAlt /> Logout
                   </MobileNavLinkItem>
                 </>

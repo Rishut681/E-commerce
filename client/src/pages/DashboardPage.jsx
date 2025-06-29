@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../store/auth';
 
 // Import DashboardNavbar and Footer
 import DashboardNavbar from '../components/DashboardNavbar';
@@ -363,8 +364,9 @@ const itemEnter = {
 
 const DashboardPage = () => {
   const navigate = useNavigate();
+  const { userData, isLoadingAuth } = useAuth();
 
-  const userName = "Customer"; 
+  const userName = userData ? userData.name : 'Customer'; 
 
   const [metrics] = useState([
     { id: 1, label: "Total Orders", value: "12", icon: <FaBoxOpen /> },
@@ -429,7 +431,7 @@ const DashboardPage = () => {
           animate="visible"
           variants={sectionEnter}
         >
-          <h1>Welcome back, {userName}!</h1>
+          <h1>Welcome back, {isLoadingAuth ? '...' : userName} !</h1>
           <p>Your personalized hub for seamless shopping and order management.</p>
           <WelcomeIllustration><FaShoppingCart /></WelcomeIllustration>
         </WelcomeBanner>
