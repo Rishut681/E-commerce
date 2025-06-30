@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../store/auth';
 
@@ -12,7 +12,10 @@ import Footer from '../components/Footer';
 import { 
   FaBoxOpen, FaDollarSign, FaShoppingCart, FaStar, FaTags, FaChartLine, 
   FaChevronRight, FaRegBell, FaUser, FaCog, FaBell, FaEnvelope, FaSearch, 
-  FaHeart, FaHome, FaCreditCard, FaMapMarkerAlt, FaQuestionCircle, FaTruck 
+  FaHeart, FaHome, FaCreditCard, FaMapMarkerAlt, FaQuestionCircle, FaTruck,
+  FaChevronLeft, // Added for carousel navigation
+  // Specific icons for categories (expanded from previous versions)
+  FaDesktop, FaTshirt, FaBook, FaRunning, FaCar, FaUtensils, FaUserTie, FaFemale, FaShoePrints, FaMobileAlt, FaLaptopCode, FaTv, FaHeadphonesAlt, FaGamepad, FaCameraRetro, FaGem, FaSuitcase, FaChair, FaBlender, FaBaby, FaSpinner // FaSpinner as a generic placeholder or loading
 } from 'react-icons/fa';
 
 
@@ -38,6 +41,18 @@ const MainContentWrapper = styled.div`
 
   @media (max-width: 768px) {
     padding: 15px;
+  }
+`;
+
+const SectionHeader = styled.h2`
+  font-size: 1.8rem; /* Slightly larger section headers */
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: 700;
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
   }
 `;
 
@@ -205,17 +220,63 @@ const RecentOrdersCard = styled(Card)`
   }
 `;
 
-const RecommendedProductsGrid = styled(motion.div)`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-  gap: 25px;
-  margin-top: 20px; 
+// --- Product Carousel Styles ---
+const ProductCarouselWrapper = styled.div`
+  position: relative;
+  overflow: hidden; /* Hide products outside the view */
+  padding: 10px 0; /* Add some vertical padding for carousel */
+`;
 
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+const ProductCarouselInner = styled(motion.div)`
+  display: flex;
+  gap: 25px; /* Gap between product cards */
+  /* This container will be translated horizontally */
+`;
+
+const CarouselButton = styled.button`
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #6c63ff;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: #6c63ff;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #f0f0f0;
+    color: #999;
+  }
+
+  &.left {
+    left: -20px; /* Position outside the main content wrapper slightly */
+  }
+  &.right {
+    right: -20px; /* Position outside the main content wrapper slightly */
+  }
+
   @media (max-width: 768px) {
-    grid-template-columns: 1fr; 
+    width: 35px;
+    height: 35px;
+    font-size: 1.2rem;
+    &.left { left: 5px; }
+    &.right { right: 5px; }
   }
 `;
 
@@ -227,7 +288,13 @@ const ProductCardStyled = styled(motion.div)`
   text-align: left;
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer; 
+  min-height: 350px; 
+  flex-shrink: 0; /* Prevent shrinking in flex container */
+  
+  /* Responsive Width Calculation for Product Cards */
+  width: calc((100% / var(--products-per-view)) - (var(--gap-count) * var(--gap-size) / var(--products-per-view)));
 
   &:hover {
     transform: translateY(-5px);
@@ -241,11 +308,21 @@ const ProductCardStyled = styled(motion.div)`
   }
   .product-info {
     padding: 20px;
+    flex-grow: 1; 
+    display: flex;
+    flex-direction: column;
   }
   h3 {
     font-size: 1.3rem;
     color: #333;
     margin-bottom: 8px;
+    line-height: 1.3;
+    min-height: 2.6em; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; 
+    -webkit-box-orient: vertical;
   }
   .price {
     font-size: 1.15rem;
@@ -254,9 +331,12 @@ const ProductCardStyled = styled(motion.div)`
     margin-bottom: 10px;
   }
   .rating {
-    color: #f39c12; /* Star color */
+    color: #f39c12; 
     font-size: 0.9rem;
     margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
   }
   .add-to-cart-btn {
     background-color: #6c63ff;
@@ -274,15 +354,22 @@ const ProductCardStyled = styled(motion.div)`
   }
 `;
 
-const CategoryBrowseGrid = styled(motion.div)`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-
-  @media (max-width: 480px) {
-    grid-template-columns: repeat(2, 1fr);
+// --- Category Carousel Styles ---
+const CategoryBrowseWrapper = styled.div`
+  position: relative;
+  overflow-x: auto; /* Enable horizontal scrolling */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  padding: 10px 0; /* Add some vertical padding */
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  &::-webkit-scrollbar { /* Hide scrollbar for Chrome, Safari, Opera */
+    display: none;
   }
+`;
+
+const CategoryBrowseInner = styled(motion.div)`
+  display: flex;
+  gap: 20px; /* Gap between category cards */
+  padding-bottom: 10px; /* Space for potential scrollbar area */
 `;
 
 const CategoryCard = styled(motion.div)`
@@ -297,6 +384,9 @@ const CategoryCard = styled(motion.div)`
   justify-content: center;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0; /* Prevent shrinking */
+  width: 180px; /* Fixed width for category cards */
+  height: 150px; /* Fixed height for consistent look */
 
   &:hover {
     transform: translateY(-5px);
@@ -348,17 +438,83 @@ const PromotionBanner = styled(Card)`
   }
 `;
 
+const LoadingMessage = styled.p`
+  text-align: center;
+  font-size: 1.2rem;
+  color: #666;
+  padding: 50px;
+`;
+
+const ErrorMessage = styled.p`
+  text-align: center;
+  font-size: 1.2rem;
+  color: #dc3545;
+  padding: 50px;
+`;
+
+// Map category names to relevant icons (expanded to match seed data)
+const categoryIconsMap = {
+  'Electronics': <FaDesktop />,
+  'Wearables': <FaSpinner />, // Generic spinner, consider a specific watch icon
+  'Home & Kitchen': <FaHome />,
+  'Apparel': <FaTshirt />,
+  "Men's Clothing": <FaUserTie />,
+  "Women's Clothing": <FaFemale />,
+  "Footwear": <FaShoePrints />, 
+  "Smartphones": <FaMobileAlt />,
+  "Laptops": <FaLaptopCode />,
+  "Televisions": <FaTv />,
+  "Audio": <FaHeadphonesAlt />,
+  "Books": <FaBook />,
+  'Sports & Outdoors': <FaRunning />,
+  'Automotive': <FaCar />,
+  'Groceries': <FaUtensils />,
+  'Health & Beauty': <FaGem />, 
+  'Toys & Games': <FaBaby />, 
+  'Pet Supplies': <FaSpinner />, // Generic spinner
+  'Furniture': <FaChair />,
+  'Kitchen Appliances': <FaBlender />,
+  'Gaming': <FaGamepad />,
+  'Cameras': <FaCameraRetro />,
+  'Jewelry': <FaGem />,
+  'Bags & Luggage': <FaSuitcase />
+};
+
 
 // --- Framer Motion Variants ---
 const sectionEnter = {
   hidden: { opacity: 0, y: 50 },
-  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 80, damping: 15 } },
+  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 80, damping: 15, delay: 0.1 } },
 };
 
 const itemEnter = {
   hidden: { opacity: 0, scale: 0.9 },
   visible: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 100, damping: 10 } },
 };
+
+const carouselVariants = {
+  enter: (direction) => ({
+    x: direction > 0 ? 1000 : -1000, // Start off-screen
+    opacity: 0
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    transition: {
+      x: { type: "spring", stiffness: 300, damping: 30 },
+      opacity: { duration: 0.2 }
+    }
+  },
+  exit: (direction) => ({
+    x: direction < 0 ? 1000 : -1000, // Exit off-screen in opposite direction
+    opacity: 0,
+    transition: {
+      x: { type: "spring", stiffness: 300, damping: 30 },
+      opacity: { duration: 0.2 }
+    }
+  })
+};
+
 
 // --- DashboardPage Component ---
 
@@ -368,6 +524,20 @@ const DashboardPage = () => {
 
   const userName = userData ? userData.name : 'Customer'; 
 
+  // State for fetched data
+  const [categories, setCategories] = useState([]);
+  const [allProducts, setAllProducts] = useState([]); // Store all fetched products
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [categoriesError, setCategoriesError] = useState(null);
+  const [productsError, setProductsError] = useState(null);
+
+  // Carousel state
+  const [productPageIndex, setProductPageIndex] = useState(0);
+  const [productsPerView, setProductsPerView] = useState(4); // Default for desktop
+  const [direction, setDirection] = useState(0); // 0 for no direction, 1 for next, -1 for prev
+
+  // Static data for metrics and recent orders (as per previous request)
   const [metrics] = useState([
     { id: 1, label: "Total Orders", value: "12", icon: <FaBoxOpen /> },
     { id: 2, label: "Pending Orders", value: "2", icon: <FaTruck /> }, 
@@ -381,47 +551,108 @@ const DashboardPage = () => {
     { id: 'NEXA-ORD-003', date: '2025-06-18', status: 'pending', amount: '$45.99' },
   ]);
 
-  const [recommendedProducts] = useState([
-    {
-      id: 1,
-      name: "Nexa Wireless Earbuds Pro",
-      price: "99.99",
-      rating: 4.8,
-      imageUrl: "https://placehold.co/300x200/6c63ff/ffffff?text=Earbuds",
-    },
-    {
-      id: 2,
-      name: "Smart Watch Elite",
-      price: "199.99",
-      rating: 4.5,
-      imageUrl: "https://placehold.co/300x200/3a2cdb/ffffff?text=Smart+Watch",
-    },
-    {
-      id: 3,
-      name: "Ultra HD Monitor 27'",
-      price: "349.00",
-      rating: 4.7,
-      imageUrl: "https://placehold.co/300x200/ff6b6b/ffffff?text=Monitor",
-    },
-    {
-      id: 4,
-      name: "Gaming Mouse X-Pro",
-      price: "59.99",
-      rating: 4.9,
-      imageUrl: "https://placehold.co/300x200/4CAF50/ffffff?text=Gaming+Mouse",
-    },
-  ]);
+  // --- Responsive productsPerView ---
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 480) {
+        setProductsPerView(1);
+      } else if (window.innerWidth <= 768) {
+        setProductsPerView(2);
+      } else if (window.innerWidth <= 1200) {
+        setProductsPerView(3);
+      } else {
+        setProductsPerView(4);
+      }
+    };
 
-  const [categories] = useState([
-    { id: 1, name: "Electronics", icon: <FaShoppingCart /> },
-    { id: 2, name: "Fashion", icon: <FaTags /> },
-    { id: 3, name: "Home Goods", icon: <FaHome /> },
-    { id: 4, name: "Books", icon: <FaBoxOpen /> },
-  ]);
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Call initially
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+
+  // --- Fetch Categories ---
+  const fetchCategories = useCallback(async () => {
+    setLoadingCategories(true);
+    setCategoriesError(null);
+    try {
+      const response = await fetch('http://localhost:5000/api/categories'); 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setCategories(data || []);
+    } catch (err) {
+      console.error('Error fetching categories for dashboard:', err);
+      setCategoriesError('Failed to load categories.');
+      setCategories([]);
+    } finally {
+      setLoadingCategories(false);
+    }
+  }, []);
+
+  // --- Fetch All Products for Carousel (or a larger set) ---
+  const fetchAllProducts = useCallback(async () => {
+    setLoadingProducts(true);
+    setProductsError(null);
+    try {
+      // Fetch all products, or a large enough number to fill the carousel
+      // For a real app, you might fetch 'featured' or 'newest' products specifically
+      const response = await fetch('http://localhost:5000/api/products?sort=newest&limit=20'); // Fetch more products for carousel
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setAllProducts(data.products || []);
+    } catch (err) {
+      console.error('Error fetching all products for dashboard carousel:', err);
+      setProductsError('Failed to load products for recommendations.');
+      setAllProducts([]);
+    } finally {
+      setLoadingProducts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+    fetchAllProducts();
+  }, [fetchCategories, fetchAllProducts]);
+
+  // --- Carousel Navigation Logic ---
+  const paginateProducts = useCallback((newDirection) => {
+    setDirection(newDirection);
+    setProductPageIndex((prevIndex) => {
+      const totalPages = Math.ceil(allProducts.length / productsPerView);
+      let newIndex = prevIndex + newDirection;
+      
+      // Clamp index to valid range
+      if (newIndex < 0) newIndex = 0; // Don't wrap around for simplicity, or implement full wrap if desired
+      if (newIndex >= totalPages) newIndex = totalPages - 1;
+
+      return newIndex;
+    });
+  }, [allProducts.length, productsPerView]);
+
+  const startIndex = productPageIndex * productsPerView;
+  const endIndex = startIndex + productsPerView;
+  const currentProductsInView = allProducts.slice(startIndex, endIndex);
+
+  // Calculate total pages for carousel
+  const totalProductPages = Math.ceil(allProducts.length / productsPerView);
+
+
+  const handleProductClick = (productId) => {
+    // Implement navigation to product detail page if you have one
+    console.log(`Navigating to product details for ID: ${productId}`);
+    // navigate(`/product/${productId}`); // Example route
+  };
+
+  const handleCategoryClick = (categoryName) => {
+    navigate(`/shop?category=${encodeURIComponent(categoryName)}`);
+  };
 
   return (
     <DashboardContainer>
-      {/* DashboardNavbar and Footer will now contain internal wrappers to match max-width */}
       <DashboardNavbar />
       
       <MainContentWrapper>
@@ -442,7 +673,7 @@ const DashboardPage = () => {
           animate="visible"
           variants={sectionEnter}
         >
-          <h2>Your Activity at a Glance</h2>
+          <SectionHeader>Your Activity at a Glance</SectionHeader>
           <MetricsGrid>
             {metrics.map((metric) => (
               <MetricCard key={metric.id} variants={itemEnter}>
@@ -460,7 +691,7 @@ const DashboardPage = () => {
           animate="visible"
           variants={sectionEnter}
         >
-          <h2>Recent Orders</h2>
+          <SectionHeader>Recent Orders</SectionHeader>
           <ul>
             {recentOrders.map((order) => (
               <motion.li key={order.id} variants={itemEnter}>
@@ -479,30 +710,77 @@ const DashboardPage = () => {
           </div>
         </RecentOrdersCard>
 
-        {/* Personalized Recommendations (doubles as "Popular/New Arrivals") */}
+        {/* Personalized Recommendations (Carousel) */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={sectionEnter}
         >
-          <h2>Recommended for You</h2>
-          <RecommendedProductsGrid>
-            {recommendedProducts.map((product) => (
-              <ProductCardStyled key={product.id} variants={itemEnter}>
-                <img src={product.imageUrl} alt={product.name} />
-                <div className="product-info">
-                  <h3>{product.name}</h3>
-                  <p className="price">${product.price}</p>
-                  <div className="rating">
-                    {Array.from({ length: 5 }, (_, i) => (
-                      <FaStar key={i} color={i < Math.floor(product.rating) ? "#f39c12" : "#e0e0e0"} />
-                    ))} ({product.rating})
-                  </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
-                </div>
-              </ProductCardStyled>
-            ))}
-          </RecommendedProductsGrid>
+          <SectionHeader>Recommended for You</SectionHeader>
+          {loadingProducts ? (
+            <LoadingMessage>Loading recommended products...</LoadingMessage>
+          ) : productsError ? (
+            <ErrorMessage>{productsError}</ErrorMessage>
+          ) : allProducts.length === 0 ? (
+            <LoadingMessage>No recommended products found.</LoadingMessage>
+          ) : (
+            <ProductCarouselWrapper>
+              <AnimatePresence initial={false} custom={direction}>
+                <ProductCarouselInner
+                  key={productPageIndex} // Key changes to trigger re-animation on page change
+                  custom={direction}
+                  variants={carouselVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  // Pass CSS variables for dynamic width calculation
+                  style={{ 
+                    '--products-per-view': productsPerView, 
+                    '--gap-size': '25px', 
+                    '--gap-count': productsPerView > 1 ? (productsPerView - 1) : 0 
+                  }}
+                >
+                  {currentProductsInView.map((product) => (
+                    <ProductCardStyled 
+                      key={product._id} 
+                      onClick={() => handleProductClick(product._id)} 
+                    >
+                      <img src={product.image} alt={product.name} onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/300x200/cccccc/333333?text=No+Image"; }} />
+                      <div className="product-info">
+                        <h3>{product.name}</h3>
+                        <p className="price">${product.price.toFixed(2)}</p>
+                        <div className="rating">
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <FaStar key={i} color={i < 4 ? "#f39c12" : "#e0e0e0"} /> 
+                          ))} (4.0) 
+                        </div>
+                        <button className="add-to-cart-btn">Add to Cart</button>
+                      </div>
+                    </ProductCardStyled>
+                  ))}
+                </ProductCarouselInner>
+              </AnimatePresence>
+              {/* Carousel Buttons */}
+              {allProducts.length > productsPerView && ( // Only show buttons if there are more products than can be displayed at once
+                <>
+                  <CarouselButton 
+                    className="left" 
+                    onClick={() => paginateProducts(-1)} 
+                    disabled={productPageIndex === 0}
+                  >
+                    <FaChevronLeft />
+                  </CarouselButton>
+                  <CarouselButton 
+                    className="right" 
+                    onClick={() => paginateProducts(1)} 
+                    disabled={productPageIndex === totalProductPages - 1}
+                  >
+                    <FaChevronRight />
+                  </CarouselButton>
+                </>
+              )}
+            </ProductCarouselWrapper>
+          )}
         </motion.div>
 
         {/* NEW SECTION: Promotion Banner and User Profile next to each other */}
@@ -513,14 +791,14 @@ const DashboardPage = () => {
         >
           {/* Promotion Banner */}
           <PromotionBanner>
-            <h2>Exclusive Offer!</h2>
+            <SectionHeader>Exclusive Offer!</SectionHeader>
             <p>Don't miss out on our limited-time deals. Sign up for our newsletter to get the latest updates directly in your inbox.</p>
             <button onClick={() => navigate('/Newsletter')}>Get Started Now!</button>
           </PromotionBanner>
           
           {/* Optional: Placeholder for User Profile Summary / Quick Links */}
-          <Card> {/* Removed framer motion props here to apply them to the parent grid */}
-            <h2>My Profile</h2>
+          <Card> 
+            <SectionHeader>My Profile</SectionHeader>
             <p style={{textAlign: 'center', color: '#888', marginBottom: '15px'}}>Quick access to your account settings.</p>
             <div style={{display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexWrap: 'wrap', gap: '15px'}}>
                 <Link to="/profile" style={{color: '#6c63ff', textDecoration: 'none', fontSize: '2.5rem'}}><FaUser /></Link>
@@ -532,21 +810,39 @@ const DashboardPage = () => {
           </Card>
         </BottomTwoColumnGrid>
 
-        {/* Quick Browse Categories - Moved here so it's not always at the very bottom */}
+        {/* Quick Browse Categories - Now fetched from backend */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={sectionEnter}
         >
-          <h2>Quick Browse</h2>
-          <CategoryBrowseGrid>
-            {categories.map((category) => (
-              <CategoryCard key={category.id} variants={itemEnter} onClick={() => navigate(`/categories/${category.name.toLowerCase()}`)}>
-                <div className="icon">{category.icon}</div>
-                <div className="name">{category.name}</div>
-              </CategoryCard>
-            ))}
-          </CategoryBrowseGrid>
+          <SectionHeader>Quick Browse Categories</SectionHeader>
+          {loadingCategories ? (
+            <LoadingMessage>Loading categories...</LoadingMessage>
+          ) : categoriesError ? (
+            <ErrorMessage>{categoriesError}</ErrorMessage>
+          ) : categories.length === 0 ? (
+            <LoadingMessage>No categories found.</LoadingMessage>
+          ) : (
+            <CategoryBrowseWrapper>
+              <CategoryBrowseInner>
+                <AnimatePresence>
+                  {categories.map((category, index) => {
+                    return (
+                      <CategoryCard 
+                        key={category._id} 
+                        variants={itemEnter} 
+                        onClick={() => handleCategoryClick(category.name)}
+                      >
+                        <div className="icon">{categoryIconsMap[category.name] || <FaBoxes />}</div>
+                        <div className="name">{category.name}</div>
+                      </CategoryCard>
+                    );
+                  })}
+                </AnimatePresence>
+              </CategoryBrowseInner>
+            </CategoryBrowseWrapper>
+          )}
         </motion.div>
 
       </MainContentWrapper>

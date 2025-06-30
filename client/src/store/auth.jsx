@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import LoadingScreen from '../components/LoadingScreen';
 // Create the AuthContext
 const AuthContext = createContext(null);
 
@@ -123,4 +123,22 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+// NEW: Admin Protected Route component, exported from auth.js
+export const AdminProtectedRoute = ({ children }) => {
+  const { isLoggedIn, userData, isLoadingAuth } = useAuth();
+
+  if (isLoadingAuth) {
+    return <LoadingScreen />; // Show loading while auth context initializes
+  }
+
+  // Check if logged in AND is admin based on userData.role
+  if (!isLoggedIn || !userData || userData.role !== 'admin') {
+    // Redirect non-admins or unauthenticated users to home
+    // A separate alert or toast could be added here for better UX
+    return <Navigate to="/home" replace />; 
+  }
+
+  return children;
 };

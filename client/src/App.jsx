@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { AnimatePresence } from 'framer-motion';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 
-import { AuthProvider, useAuth } from './store/auth';
+import { AuthProvider, useAuth, AdminProtectedRoute } from './store/auth';
 
 // Import Components
 import GlobalStyles from './GlobalStyles';
@@ -13,6 +13,10 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage'; // Import the new SignupPage
 import DashboardPage from './pages/DashboardPage';
 import ContactPage from './pages/ContactPage';
+import ShopPage from './pages/ShopPage';
+import ProductManagementPage from './pages/Admin/ProductManagementPage'; // NEW: Import Admin Product Management Page
+import CategoriesPage from './pages/CategoriesPage';
+
 import ErrorPage from './pages/ErrorPage'
 
 const PageWrapper = styled.div`
@@ -60,6 +64,14 @@ function AppContent() {
           {/* DashboardNavbar and Footer should be integrated into these pages */}
           <Route path="/home" element={<DashboardPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/shop" element={<ShopPage />} />
+          <Route path="/categories" element={<CategoriesPage />} />
+
+          <Route path="/admin/products" element={
+            <AdminProtectedRoute>
+              <ProductManagementPage />
+            </AdminProtectedRoute>
+          } />
 
           {/* Fallback for any unmatched routes */}
           <Route path="*" element={<ErrorPage />} />

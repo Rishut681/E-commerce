@@ -2,9 +2,10 @@ require('dotenv').config();
 const express = require("express");
 const app = express();
 const authRoute = require("./router/auth-router");
+const productRoute = require("./router/product-router");
+const contactRoute = require("./router/contact-router");
 const connectDB = require("./utils/db");
 const errorHandler = require('./middlewares/error-middleware');
-const contactRoute = require("./router/contact-router");
 const cors = require("cors");
 
 const corsOptions = {
@@ -21,6 +22,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoute);
 app.use("/api/form", contactRoute);
+app.use("/api", productRoute);
 
 app.use(errorHandler);
 
