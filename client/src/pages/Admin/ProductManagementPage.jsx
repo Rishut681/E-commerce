@@ -7,6 +7,7 @@ import Footer from '../../components/Footer';
 import ProductForm from '../../components/admin/ProductForm'; // Import the new ProductForm
 import { useAuth } from '../../store/auth'; // To check admin status
 import { useNavigate } from 'react-router-dom';
+import { toast } from "react-toastify";
 
 // --- Styled Components ---
 
@@ -254,7 +255,7 @@ const ProductManagementPage = () => {
   useEffect(() => {
     if (!isLoadingAuth) { 
       if (!isLoggedIn || !userData || userData.role !== 'admin') {
-        alert("You must be logged in as an administrator to access this page.");
+        toast("You must be logged in as an administrator to access this page.");
         navigate('/home'); 
       }
     }
@@ -330,7 +331,7 @@ const ProductManagementPage = () => {
           throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
 
-        alert("Product deleted successfully!");
+        toast("Product deleted successfully!");
         fetchProducts(); 
       } catch (err) {
         console.error('Error deleting product:', err);

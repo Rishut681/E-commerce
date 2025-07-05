@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash, FaSpinner } from 'react-icons/fa';
 import { useAuth } from '../store/auth';
+import { toast } from "react-toastify";
 
 // --- Styled Components ---
 
@@ -359,7 +360,7 @@ const LoginPage = () => {
       
       if (response.ok) { // Status is 2xx
         console.log('Backend login successful:', responseData);
-        alert(responseData.msg || 'Login successful! Welcome back.');
+        toast(responseData.msg || 'Login successful! Welcome back.');
         
         // Use the login function from context to set token and userID
         login(responseData.token, responseData.userID);

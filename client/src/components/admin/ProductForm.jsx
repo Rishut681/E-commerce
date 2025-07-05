@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaSpinner } from 'react-icons/fa';
 import { useAuth } from '../../store/auth'; // To get auth token
+import { toast } from "react-toastify";
 
 // --- Styled Components ---
 
@@ -240,7 +241,7 @@ const ProductForm = ({ productToEdit, onClose, onSuccess, categories }) => {
       const responseData = await response.json();
 
       if (response.ok) {
-        alert(responseData.message || `Product ${isEditing ? 'updated' : 'created'} successfully!`);
+        toast(responseData.message || `Product ${isEditing ? 'updated' : 'created'} successfully!`);
         onSuccess(); // Call onSuccess callback to refresh list and close modal
       } else {
         setError(responseData.message || `Failed to ${isEditing ? 'update' : 'create'} product.`);

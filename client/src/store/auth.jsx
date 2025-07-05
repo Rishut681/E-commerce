@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoadingScreen from '../components/LoadingScreen';
+import { toast } from 'react-toastify';
 // Create the AuthContext
 const AuthContext = createContext(null);
 
@@ -36,9 +37,9 @@ export const AuthProvider = ({ children }) => {
     setAuthToken(null);
     setUserID(null);
     setUserData(null); // NEW: Clear user data on logout
-    // Removed alert("Logout Successfully") as per best practices
     localStorage.removeItem('authToken');
     localStorage.removeItem('userID');
+    toast("Logout Successfully");
     console.log('User logged out.');
     navigate('/'); // Changed to redirect to the main landing page as discussed
   }, [navigate]);

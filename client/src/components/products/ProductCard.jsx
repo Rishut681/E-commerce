@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaStar, FaShoppingCart, FaHeart } from 'react-icons/fa';
+import { toast } from "react-toastify";
 
 // --- Styled Components ---
 const ProductCardContainer = styled(motion.div)`
@@ -130,16 +131,16 @@ const ProductCard = ({ product, variants }) => {
 
   const handleAddToCart = (e) => {
     e.stopPropagation(); 
-    alert(`Added "${product.name}" to cart!`);
+    toast(`Added "${product.name}" to cart!`);
   };
 
   const handleAddToWishlist = (e) => {
     e.stopPropagation(); 
-    alert(`Added "${product.name}" to wishlist!`);
+    toast(`Added "${product.name}" to wishlist!`);
   };
 
   const handleViewDetails = () => {
-    alert(`Navigating to details for: ${product.name}`);
+    toast(`Navigating to details for: ${product.name}`);
   };
 
   return (

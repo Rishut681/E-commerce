@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash, FaSpinner } from 'react-icons/fa';
 import { useAuth } from '../store/auth';
+import { toast } from "react-toastify";
 // --- Styled Components ---
 
 const AuthPageWrapper = styled.div`
@@ -372,7 +373,7 @@ const SignupPage = () => {
 
       if (response.ok) { // Check if the response status is in the 200-299 range
         console.log('Backend signup successful:', responseData);
-        alert(responseData.msg || 'Signup successful! You can now log in.'); 
+        toast(responseData.msg || 'Signup successful! You can now log in.'); 
         // Automatically log in the user after successful registration
         if (responseData.token && responseData.userID) {
           login(responseData.token, responseData.userID); // NEW: Use context login function

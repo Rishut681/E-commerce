@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
 import DashboardNavbar from '../components/DashboardNavbar'; // Import the DashboardNavbar component
+import { toast } from "react-toastify";
 
 // --- New Styled Component for Page Layout ---
 const PageContainer = styled.div`
@@ -312,10 +313,12 @@ const ContactPage = () => {
           const responseData = await response.json();
     
           if (response.ok) {
+            toast.success('Message sent successfully!');
             console.log('Message sent successfully:', responseData);
             setSuccess(true); // Show success message
             setFormData({ name: '', email: '', subject: '', message: '' }); // Clear the form
           } else {
+            toast.error('Submission failed.');
             console.error('Submission failed:', responseData);
             // Adapt error message parsing based on your backend's actual error response structure
             if (responseData.extraDetails) {
