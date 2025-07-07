@@ -1,129 +1,132 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaPlus, FaMinus, FaTrash, FaShoppingCart, FaArrowRight, FaSpinner } from 'react-icons/fa'; // Added FaSpinner
+import { useNavigate } from 'react-router-dom';
+import { FaShoppingCart, FaSpinner, FaTrash, FaPlus, FaMinus, FaSadTear, FaBoxOpen } from 'react-icons/fa';
 import DashboardNavbar from '../components/DashboardNavbar';
 import Footer from '../components/Footer';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../store/auth'; // Import useAuth to get authToken
+import { useAuth } from '../store/auth';
+import { toast } from 'react-toastify';
 
 // --- Styled Components ---
 
-const CartPageContainer = styled.div`
+const CartPageContainer = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   background-color: #f0f2f5;
   font-family: 'Arial', sans-serif;
-  display: flex;
-  flex-direction: column;
 `;
 
-const ContentWrapper = styled.div`
+const MainContentWrapper = styled.div`
+  width: 100%;
   max-width: 1200px;
-  margin: 30px auto;
-  padding: 0 30px;
+  margin: 0 auto;
+  padding: 30px;
   flex-grow: 1;
   display: flex;
+  flex-direction: column;
   gap: 30px;
 
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    padding: 0 15px;
-    margin: 20px auto;
+  @media (max-width: 768px) {
+    padding: 15px;
+    gap: 20px;
   }
 `;
 
-const CartItemsContainer = styled(motion.div)`
-  flex: 2; /* Takes 2/3 of the space */
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-  padding: 30px;
-
-  h2 {
-    font-size: 2rem;
-    color: #333;
-    margin-bottom: 25px;
-    font-weight: 700;
-  }
+const PageHeader = styled.h1`
+  font-size: 2.8rem;
+  color: #333;
+  text-align: center;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 30px;
 
   @media (max-width: 768px) {
-    padding: 20px;
-    h2 {
-      font-size: 1.8rem;
-      margin-bottom: 20px;
-    }
+    font-size: 2.2rem;
+    gap: 10px;
+    margin-bottom: 20px;
   }
 `;
 
-const CartItem = styled.div`
+const CartSummaryContainer = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* Cart items on left, summary on right */
+  gap: 30px;
+  align-items: flex-start; /* Align top */
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr; /* Stack columns on smaller screens */
+  }
+`;
+
+const CartItemsList = styled.div`
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  @media (max-width: 768px) {
+    padding: 15px;
+  }
+`;
+
+const CartItemCard = styled.div`
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 20px 0;
+  padding: 15px 0;
   border-bottom: 1px solid #eee;
 
   &:last-child {
     border-bottom: none;
   }
 
-  @media (max-width: 768px) {
+  img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .item-details {
+    flex-grow: 1;
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-    padding: 15px 0;
+    gap: 5px;
   }
-`;
 
-const ItemImage = styled.img`
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 8px;
-  flex-shrink: 0;
-
-  @media (max-width: 768px) {
-    width: 80px;
-    height: 80px;
-  }
-`;
-
-const ItemDetails = styled.div`
-  flex-grow: 1;
-
-  h3 {
+  .item-name {
     font-size: 1.1rem;
-    color: #333;
-    margin-bottom: 5px;
     font-weight: 600;
-  }
-
-  p {
-    font-size: 0.9rem;
-    color: #777;
+    color: #333;
   }
 
   .item-price {
     font-size: 1rem;
     color: #6c63ff;
     font-weight: bold;
-    margin-top: 5px;
   }
-`;
 
-const QuantityControls = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  button {
-    background-color: #f0f2f5;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    width: 30px;
-    height: 30px;
+  .quantity-controls {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 5px;
+    margin-top: 10px;
+  }
+
+  .quantity-button {
+    background-color: #f0f2f5;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 5px 10px;
     cursor: pointer;
     font-size: 1rem;
     color: #555;
@@ -139,113 +142,76 @@ const QuantityControls = styled.div`
     }
   }
 
-  span {
+  .item-quantity {
+    min-width: 30px;
+    text-align: center;
     font-size: 1rem;
     font-weight: 600;
     color: #333;
-    min-width: 20px;
-    text-align: center;
+  }
+
+  .remove-button {
+    background: none;
+    border: none;
+    color: #dc3545;
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin-left: auto; /* Push to the right */
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #c82333;
+    }
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    img {
+      width: 100%;
+      height: 150px;
+    }
+    .item-details {
+      width: 100%;
+    }
+    .remove-button {
+      margin-left: 0;
+      align-self: flex-end; /* Align to the right within the column */
+    }
   }
 `;
 
-const RemoveButton = styled.button`
-  background: none;
-  border: none;
-  color: #dc3545;
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: color 0.2s ease;
-
-  &:hover {
-    color: #c82333;
-  }
-`;
-
-const CartSummaryContainer = styled(motion.div)`
-  flex: 1; /* Takes 1/3 of the space */
-  background-color: #fff;
+const CartSummaryCard = styled.div`
+  background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-  padding: 30px;
-  height: fit-content; /* Adjust height to content */
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 
   h2 {
     font-size: 1.8rem;
     color: #333;
-    margin-bottom: 25px;
+    margin-bottom: 10px;
     font-weight: 700;
   }
 
-  div {
+  .summary-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 15px;
     font-size: 1rem;
     color: #555;
+    padding: 5px 0;
   }
 
-  .total {
-    font-size: 1.4rem;
+  .summary-total {
+    font-size: 1.3rem;
     font-weight: bold;
     color: #333;
     border-top: 1px solid #eee;
     padding-top: 15px;
-    margin-top: 15px;
-  }
-
-  button {
-    width: 100%;
-    background-color: #6c63ff;
-    color: white;
-    padding: 15px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 20px;
-
-    &:hover {
-      background-color: #5a54d4;
-      transform: translateY(-2px);
-    }
-    &:active {
-      transform: translateY(0);
-    }
-  }
-
-  @media (max-width: 768px) {
-    padding: 20px;
-    h2 {
-      font-size: 1.6rem;
-      margin-bottom: 20px;
-    }
-    .total {
-      font-size: 1.2rem;
-    }
-  }
-`;
-
-const EmptyCartMessage = styled.div`
-  text-align: center;
-  padding: 50px;
-  font-size: 1.2rem;
-  color: #777;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  flex-grow: 1; /* Allow it to take full width */
-  justify-content: center; /* Center content vertically */
-
-  svg {
-    font-size: 3rem;
-    color: #ccc;
+    margin-top: 10px;
   }
 
   button {
@@ -257,134 +223,170 @@ const EmptyCartMessage = styled.div`
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 10px rgba(108, 99, 255, 0.2);
 
     &:hover {
       background-color: #5a54d4;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(108, 99, 255, 0.3);
+    }
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 5px rgba(108, 99, 255, 0.2);
+    }
+    &:disabled {
+      background-color: #a0a0a0;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+  }
+
+  .clear-cart-button {
+    background-color: #dc3545;
+    margin-top: 10px;
+
+    &:hover {
+      background-color: #c82333;
     }
   }
 `;
 
-const LoadingMessage = styled.div`
-  text-align: center;
+const MessageContainer = styled.div`
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
   padding: 50px;
-  font-size: 1.2rem;
-  color: #666;
-  flex-grow: 1;
+  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: 200px;
 
-  svg {
-    animation: spin 1s linear infinite;
-    margin-bottom: 15px;
+  p {
+    font-size: 1.2rem;
+    color: #666;
+    margin-top: 20px;
   }
 
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  svg {
+    font-size: 3rem;
+    color: #6c63ff;
+  }
+
+  &.error svg {
+    color: #dc3545;
   }
 `;
 
-const ErrorDisplay = styled.div`
-  text-align: center;
+const LoginPrompt = styled.div`
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
   padding: 50px;
-  font-size: 1.2rem;
-  color: #dc3545;
-  flex-grow: 1;
+  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: 200px;
+
+  h2 {
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 20px;
+  }
+
+  p {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 30px;
+  }
+
+  button {
+    background-color: #6c63ff;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background-color: #5a54d4;
+      transform: translateY(-2px);
+    }
+  }
 `;
 
 // --- Framer Motion Variants ---
 const pageVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  exit: { opacity: 0, y: -20, transition: { duration: 0.3 } },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, x: -20 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
-  exit: { opacity: 0, x: 20, transition: { duration: 0.2 } },
-};
-
-const summaryVariants = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.5, delay: 0.2 } },
-  exit: { opacity: 0, scale: 0.9, transition: { duration: 0.3 } },
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+  exit: { opacity: 0, y: -20, transition: { duration: 0.4, ease: "easeIn" } }
 };
 
 
 // --- CartPage Component ---
-const CartPage = () => {
-  const navigate = useNavigate();
-  const { authToken, isLoggedIn } = useAuth(); // Get authToken and isLoggedIn from AuthContext
 
-  const [cartItems, setCartItems] = useState([]);
+const CartPage = () => {
+  const { isLoggedIn, authToken, isLoadingAuth, fetchCartCount } = useAuth();
+  const navigate = useNavigate();
+
+  const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [updatingItemId, setUpdatingItemId] = useState(null);
 
   const fetchCart = useCallback(async () => {
     if (!isLoggedIn || !authToken) {
-      setCartItems([]);
       setLoading(false);
+      setCart(null);
       return;
     }
 
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:5000/api/cart', {
+      const response = await fetch('http://localhost:5000/api/cart', { 
         headers: {
           'Authorization': `Bearer ${authToken}`,
         },
       });
-      const data = await response.json();
 
-      if (response.ok) {
-        setCartItems(data.cart?.items || []); // Set items, handle empty cart case
-      } else {
-        setError(data.message || 'Failed to fetch cart.');
-        setCartItems([]);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
+      setCart(data.cart);
+      fetchCartCount();
     } catch (err) {
       console.error('Error fetching cart:', err);
-      setError('Network error or server unavailable.');
-      setCartItems([]);
+      setError('Failed to load cart items. Please try again.');
+      setCart(null);
     } finally {
       setLoading(false);
     }
-  }, [authToken, isLoggedIn]);
+  }, [isLoggedIn, authToken, fetchCartCount]);
 
   useEffect(() => {
     fetchCart();
   }, [fetchCart]);
 
-  const updateQuantity = async (productId, delta) => {
-    if (!isLoggedIn || !authToken) {
-      alert('Please log in to manage your cart.');
-      navigate('/login');
-      return;
-    }
-
-    const currentItem = cartItems.find(item => item.productId === productId);
-    if (!currentItem) return;
-
-    const newQuantity = Math.max(1, currentItem.quantity + delta);
-
-    // Optimistic update
-    setCartItems(prevItems =>
-      prevItems.map(item =>
-        item.productId === productId ? { ...item, quantity: newQuantity } : item
-      )
-    );
-
+  const handleUpdateQuantity = async (productId, newQuantity) => {
+    setUpdatingItemId(productId);
     try {
-      const response = await fetch(`http://localhost:5000/api/cart/${productId}`, {
+      const response = await fetch(`http://localhost:5000/api/cart/${productId}`, { 
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -393,181 +395,211 @@ const CartPage = () => {
         body: JSON.stringify({ quantity: newQuantity }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update quantity on server.');
+      const data = await response.json();
+
+      if (response.ok) {
+        toast(data.message);
+        fetchCart();
+      } else {
+        toast(data.message || 'Failed to update quantity.');
+        console.error('Error updating quantity:', data.message);
       }
-      // Re-fetch to ensure consistency, or update based on response if response contains full cart
-      fetchCart(); 
-    } catch (err) {
-      console.error('Error updating quantity:', err);
-      setError(err.message || 'Failed to update item quantity.');
-      fetchCart(); // Revert to server state on error
+    } catch (error) {
+      console.error('Network error updating quantity:', error);
+      toast('Network error: Could not update quantity.');
+    } finally {
+      setUpdatingItemId(null);
     }
   };
 
-  const removeItem = async (productId) => {
-    if (!isLoggedIn || !authToken) {
-      alert('Please log in to manage your cart.');
-      navigate('/login');
+  const handleRemoveItem = async (productId) => {
+    if (!window.confirm("Are you sure you want to remove this item from your cart?")) {
       return;
     }
-
-    // Optimistic update
-    setCartItems(prevItems => prevItems.filter(item => item.productId !== productId));
-
+    setUpdatingItemId(productId);
     try {
-      const response = await fetch(`http://localhost:5000/api/cart/${productId}`, {
+      const response = await fetch(`http://localhost:5000/api/cart/${productId}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${authToken}`,
         },
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to remove item from server.');
+      const data = await response.json();
+
+      if (response.ok) {
+        toast(data.message);
+        fetchCart();
+      } else {
+        toast(data.message || 'Failed to remove item.');
+        console.error('Error removing item:', data.message);
       }
-      // Re-fetch to ensure consistency
-      fetchCart();
-    } catch (err) {
-      console.error('Error removing item:', err);
-      setError(err.message || 'Failed to remove item from cart.');
-      fetchCart(); // Revert to server state on error
+    } catch (error) {
+      console.error('Network error removing item:', error);
+      toast('Network error: Could not remove item.');
+    } finally {
+      setUpdatingItemId(null);
     }
   };
 
-  const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  const handleClearCart = async () => {
+    if (!window.confirm("Are you sure you want to clear your entire cart? This action cannot be undone.")) {
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/cart', { 
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast(data.message);
+        setCart({ user: isLoggedIn ? authToken : null, items: [], totalAmount: 0 });
+        fetchCartCount();
+      } else {
+        toast(data.message || 'Failed to clear cart.');
+        console.error('Error clearing cart:', data.message);
+      }
+    } catch (error) {
+      console.error('Network error clearing cart:', error);
+      toast('Network error: Could not clear cart.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const subtotal = calculateSubtotal();
-  const shipping = cartItems.length > 0 ? 15.00 : 0; // Dummy shipping
-  const taxRate = 0.08; // 8% tax
-  const tax = subtotal * taxRate;
-  const total = subtotal + shipping + tax;
-
-  const handleProceedToCheckout = () => {
-    alert('Proceeding to checkout! (This is a placeholder action)');
-    // In a real app, you would navigate to a checkout page:
-    // navigate('/checkout');
+  const handleCheckout = () => {
+    toast("Proceeding to checkout! (Functionality not yet implemented)");
   };
 
-  const handleContinueShopping = () => {
-    navigate('/shop');
-  };
 
-  if (!isLoggedIn) {
+  if (isLoadingAuth || loading) {
     return (
       <CartPageContainer>
         <DashboardNavbar />
-        <ContentWrapper>
-          <EmptyCartMessage>
-            <FaShoppingCart />
-            <p>Please log in to view and manage your cart.</p>
-            <button onClick={() => navigate('/login')}>Login Now</button>
-          </EmptyCartMessage>
-        </ContentWrapper>
+        <MainContentWrapper style={{ justifyContent: 'center', alignItems: 'center' }}>
+          <MessageContainer>
+            <FaSpinner />
+            <p>Loading cart...</p>
+          </MessageContainer>
+        </MainContentWrapper>
         <Footer />
       </CartPageContainer>
     );
   }
 
-  return (
-    <CartPageContainer>
-      <DashboardNavbar />
-      <AnimatePresence mode="wait">
-        <ContentWrapper
-          key="cart-content"
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          variants={pageVariants}
-        >
-          {loading ? (
-            <LoadingMessage>
-              <FaSpinner />
-              <p>Loading your cart...</p>
-            </LoadingMessage>
-          ) : error ? (
-            <ErrorDisplay>
-              <p>{error}</p>
-              <button onClick={fetchCart}>Retry</button>
-            </ErrorDisplay>
-          ) : cartItems.length === 0 ? (
-            <EmptyCartMessage>
-              <FaShoppingCart />
-              <p>Your cart is empty.</p>
-              <button onClick={handleContinueShopping}>Continue Shopping</button>
-            </EmptyCartMessage>
-          ) : (
-            <>
-              <CartItemsContainer
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                variants={pageVariants}
-              >
-                <h2>Your Shopping Cart</h2>
-                <AnimatePresence>
-                  {cartItems.map(item => (
-                    <motion.div key={item.productId} variants={itemVariants} initial="hidden" animate="visible" exit="exit">
-                      <CartItem>
-                        {/* Use item.image directly from cart item */}
-                        <ItemImage src={item.image} alt={item.name} onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/100x100/cccccc/333333?text=No+Img"; }} />
-                        <ItemDetails>
-                          <h3>{item.name}</h3>
-                          <p className="item-price">${item.price.toFixed(2)}</p>
-                        </ItemDetails>
-                        <QuantityControls>
-                          <button onClick={() => updateQuantity(item.productId, -1)} disabled={item.quantity <= 1}>
-                            <FaMinus />
-                          </button>
-                          <span>{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item.productId, 1)}>
-                            <FaPlus />
-                          </button>
-                        </QuantityControls>
-                        <RemoveButton onClick={() => removeItem(item.productId)}>
-                          <FaTrash />
-                        </RemoveButton>
-                      </CartItem>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </CartItemsContainer>
+  if (!isLoggedIn) {
+    return (
+      <CartPageContainer>
+        <DashboardNavbar />
+        <MainContentWrapper style={{ justifyContent: 'center', alignItems: 'center' }}>
+          <LoginPrompt>
+            <h2>Access Denied</h2>
+            <p>Please log in to view and manage your shopping cart.</p>
+            <button onClick={() => navigate('/login')}>Login Now</button>
+          </LoginPrompt>
+        </MainContentWrapper>
+        <Footer />
+      </CartPageContainer>
+    );
+  }
 
-              <CartSummaryContainer
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                variants={summaryVariants}
-              >
-                <h2>Order Summary</h2>
-                <div>
-                  <span>Subtotal:</span>
-                  <span>${subtotal.toFixed(2)}</span>
-                </div>
-                <div>
-                  <span>Shipping:</span>
-                  <span>${shipping.toFixed(2)}</span>
-                </div>
-                <div>
-                  <span>Tax ({taxRate * 100}%):</span>
-                  <span>${tax.toFixed(2)}</span>
-                </div>
-                <div className="total">
-                  <span>Total:</span>
-                  <span>${total.toFixed(2)}</span>
-                </div>
-                <button onClick={handleProceedToCheckout}>
-                  Proceed to Checkout <FaArrowRight />
-                </button>
-              </CartSummaryContainer>
-            </>
-          )}
-        </ContentWrapper>
-      </AnimatePresence>
+  const hasItems = cart && cart.items && cart.items.length > 0;
+
+  return (
+    <CartPageContainer
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+    >
+      <DashboardNavbar />
+      <MainContentWrapper>
+        <PageHeader><FaShoppingCart /> My Shopping Cart</PageHeader>
+
+        {error ? (
+          <MessageContainer className="error">
+            <FaSadTear />
+            <p>{error}</p>
+          </MessageContainer>
+        ) : !hasItems ? (
+          <MessageContainer>
+            <FaBoxOpen />
+            <p>Your cart is empty. Start adding some awesome products!</p>
+            <button onClick={() => navigate('/shop')} style={{ marginTop: '20px', backgroundColor: '#6c63ff', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+              Go to Shop
+            </button>
+          </MessageContainer>
+        ) : (
+          <CartSummaryContainer>
+            <CartItemsList>
+              {cart.items.map((item) => (
+                <CartItemCard key={item.productId._id}> {/* Use item.productId._id as key */}
+                  {/* Access image, name, price directly from item as they are denormalized */}
+                  <img src={item.image || 'https://placehold.co/100x100/cccccc/333333?text=No+Image'} alt={item.name} />
+                  <div className="item-details">
+                    <span className="item-name">{item.name}</span>
+                    <span className="item-price">${item.price.toFixed(2)}</span>
+                    <div className="quantity-controls">
+                      <button
+                        className="quantity-button"
+                        onClick={() => handleUpdateQuantity(item.productId._id, item.quantity - 1)}
+                        disabled={item.quantity <= 1 || updatingItemId === item.productId._id}
+                      >
+                        <FaMinus />
+                      </button>
+                      <span className="item-quantity">
+                        {updatingItemId === item.productId._id ? <FaSpinner style={{ animation: 'spin 1s linear infinite' }} /> : item.quantity}
+                      </span>
+                      <button
+                        className="quantity-button"
+                        onClick={() => handleUpdateQuantity(item.productId._id, item.quantity + 1)}
+                        disabled={item.quantity >= item.productId.stock || updatingItemId === item.productId._id} // Assuming stock is available via populated productId
+                      >
+                        <FaPlus />
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    className="remove-button"
+                    onClick={() => handleRemoveItem(item.productId._id)}
+                    disabled={updatingItemId === item.productId._id}
+                  >
+                    <FaTrash />
+                  </button>
+                </CartItemCard>
+              ))}
+            </CartItemsList>
+
+            <CartSummaryCard>
+              <h2>Order Summary</h2>
+              <div className="summary-row">
+                <span>Subtotal ({cart.items.length} items)</span>
+                <span>${cart.totalAmount.toFixed(2)}</span>
+              </div>
+              <div className="summary-row">
+                <span>Shipping</span>
+                <span>$0.00</span>
+              </div>
+              <div className="summary-total">
+                <span>Total</span>
+                <span>${cart.totalAmount.toFixed(2)}</span>
+              </div>
+              <button onClick={handleCheckout}>
+                Proceed to Checkout
+              </button>
+              <button className="clear-cart-button" onClick={handleClearCart} disabled={loading}>
+                Clear Cart
+              </button>
+            </CartSummaryCard>
+          </CartSummaryContainer>
+        )}
+      </MainContentWrapper>
       <Footer />
     </CartPageContainer>
   );

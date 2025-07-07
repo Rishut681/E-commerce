@@ -8,6 +8,7 @@ import { AuthProvider, useAuth, AdminProtectedRoute } from './store/auth';
 // Import Components
 import GlobalStyles from './GlobalStyles';
 import LoadingScreen from './components/LoadingScreen';
+import ErrorPage from './pages/ErrorPage'
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage'; // Import the new SignupPage
@@ -17,8 +18,6 @@ import ShopPage from './pages/ShopPage';
 import ProductManagementPage from './pages/Admin/ProductManagementPage'; // NEW: Import Admin Product Management Page
 import CategoriesPage from './pages/CategoriesPage';
 import CartPage from './pages/CartPage';
-
-import ErrorPage from './pages/ErrorPage'
 
 const PageWrapper = styled.div`
   min-height: 100vh;

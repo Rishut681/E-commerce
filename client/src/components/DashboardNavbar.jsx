@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { 
   FaShoppingCart, FaUserCircle, FaSearch, FaSignOutAlt, FaUser, FaBoxOpen,
   FaLaptop, FaTshirt, FaHome, FaBook, FaRunning, FaCar, FaUtensils, 
-  FaChevronDown, FaChevronUp, FaRegBell, FaTools, FaHeart, FaMapMarkerAlt, FaCreditCard, FaSpinner,FaChevronRight// Added FaSpinner
+  FaChevronDown, FaChevronUp, FaRegBell, FaTools, FaHeart, FaMapMarkerAlt, FaCreditCard, FaSpinner // Added FaSpinner
 } from 'react-icons/fa';
 import SearchBar from "./common/SearchBar";
 
@@ -68,6 +68,31 @@ const NavLinkStyled = styled(Link)`
 
   &:hover {
     color: #6c63ff;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 3px;
+    background-color: #6c63ff;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  &:hover::after {
+    width: 100%;
+  }
+
+  @media (max-width: 768px) {
+    padding: 12px 0;
+    font-size: 1.1rem;
+    &::after {
+      bottom: -3px;
+    }
   }
 `;
 
@@ -135,16 +160,31 @@ const IconWrapper = styled.div`
   }
 `;
 
-const CartCount = styled.span`
-  background-color: #ff6b6b;
-  color: white;
-  font-size: 0.75rem;
-  font-weight: bold;
-  border-radius: 50%;
-  padding: 3px 7px;
-  position: absolute;
-  top: -8px;
-  right: -8px;
+// Modified CartIcon to use a dot instead of count
+const CartIcon = styled(Link)`
+  position: relative;
+  font-size: 1.8rem;
+  color: #555;
+  text-decoration: none;
+  transition: color 0.3s ease;
+  padding: 5px; /* Add padding for better touch target */
+
+  &:hover {
+    color: #6c63ff;
+  }
+
+  // Dot indicator for cart items
+  &.has-items::after {
+    content: '';
+    position: absolute;
+    top: -2px; /* Adjust position as needed */
+    right: -2px; /* Adjust position as needed */
+    width: 8px;
+    height: 8px;
+    background-color: #ff4d4d; /* Red dot */
+    border-radius: 50%;
+    border: 1px solid white; /* Small white border for visibility */
+  }
 `;
 
 const UserDropdownContainer = styled.div`
@@ -215,10 +255,9 @@ const dropIn = {
 
 const DashboardNavbar = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, userData, logout, authToken } = useAuth(); // Get authToken from useAuth
+  const { isLoggedIn, userData, logout, authToken, cartCount, fetchCartCount } = useAuth(); // Destructure cartCount and fetchCartCount
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false); 
   const [isCategoriesDropdownOpen, setIsCategoriesDropdownOpen] = useState(false); 
-  const [cartItemCount, setCartItemCount] = useState(0); // Initialize cart count to 0
   const isAdmin = isLoggedIn && userData && userData.role === 'admin'; 
 
   // State for fetched categories
@@ -280,34 +319,8 @@ const DashboardNavbar = () => {
     fetchCategories();
   }, []);
 
-  // Fetch cart count from backend
-  const fetchCartCount = useCallback(async () => {
-    if (!isLoggedIn || !authToken) {
-      setCartItemCount(0); // Reset count if not logged in
-      return;
-    }
-    try {
-      const response = await fetch('http://localhost:5000/api/cart', {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-      const data = await response.json();
-      if (response.ok && data.cart && data.cart.items) {
-        setCartItemCount(data.cart.items.length);
-      } else {
-        setCartItemCount(0);
-      }
-    } catch (error) {
-      console.error('Error fetching cart count:', error);
-      setCartItemCount(0); // Default to 0 on error
-    }
-  }, [isLoggedIn, authToken]);
-
-  useEffect(() => {
-    fetchCartCount();
-    // Potentially set up an interval or listen to cart changes (more advanced)
-  }, [fetchCartCount]);
+  // Fetch cart count on mount and when auth state changes
+  
 
 
   // Close dropdowns when clicking outside
@@ -339,6 +352,11 @@ const DashboardNavbar = () => {
     setIsUserDropdownOpen(false); 
   };
 
+  const handleUserMenuToggle = () => {
+    setIsUserDropdownOpen(prev => !prev);
+    setIsCategoriesDropdownOpen(false); // Close categories dropdown if user dropdown opens
+  };
+
   const handleCategoryDropdownClick = () => {
     setIsCategoriesDropdownOpen(prev => !prev);
     setIsUserDropdownOpen(false); // Close user dropdown if categories opens
@@ -346,6 +364,10 @@ const DashboardNavbar = () => {
 
   const handleCategorySelect = (categoryName) => {
     handleNavigation(`/shop?category=${encodeURIComponent(categoryName)}`); // Navigate to shop with category filter
+  };
+
+  const handleSearchSubmit = (searchTerm) => {
+    navigate(`/shop?search=${encodeURIComponent(searchTerm)}`);
   };
 
   return (
@@ -424,20 +446,18 @@ const DashboardNavbar = () => {
 
         <UserActions>
           <IconWrapper>
-            <SearchBar /> {/* SearchBar component */}
+            <SearchBar onSearchSubmit={handleSearchSubmit} /> {/* SearchBar component */}
           </IconWrapper>
           <IconWrapper>
             <FaRegBell /> {/* Notifications icon */}
           </IconWrapper>
-          <IconWrapper onClick={() => handleNavigation('/cart')}> {/* Cart icon */}
+          <CartIcon to="/cart" className={isLoggedIn && cartCount > 0 ? 'has-items' : ''}> {/* Added className for dot */}
             <FaShoppingCart />
-            {cartItemCount > 0 && <CartCount>{cartItemCount}</CartCount>}
-          </IconWrapper>
-          <IconWrapper onClick={() => handleNavigation('/wishlist')}> {/* Wishlist icon */}
-            <FaHeart />
-          </IconWrapper>
+            {/* Removed cartCount display */}
+          </CartIcon>
+          
           <UserDropdownContainer className="user-dropdown-container">
-            <IconWrapper onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}>
+            <IconWrapper onClick={handleUserMenuToggle}>
               <FaUserCircle />
             </IconWrapper>
             <AnimatePresence>

@@ -11,7 +11,7 @@ router.use(authMiddleware);
 router.get('/', cartController.getCart);
 
 // Add item to cart or update quantity
-router.post('/', cartController.addItemToCart);
+router.post('/', cartController.addToCart);
 
 // Update quantity of an item in cart
 router.put('/:productId', cartController.updateCartItemQuantity);

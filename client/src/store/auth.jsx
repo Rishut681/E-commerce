@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import LoadingScreen from '../components/LoadingScreen';
-import { toast } from 'react-toastify';
+
 // Create the AuthContext
 const AuthContext = createContext(null);
 
@@ -18,33 +18,62 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [authToken, setAuthToken] = useState(localStorage.getItem('authToken') || null);
   const [userID, setUserID] = useState(localStorage.getItem('userID') || null);
-  const [userData, setUserData] = useState(null); // NEW: State to store fetched user data
+  const [userData, setUserData] = useState(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const [cartCount, setCartCount] = useState(0); // State for cart item count
   const navigate = useNavigate();
 
   // Function to handle user login
-  const login = useCallback((token, id) => {
+  const login = useCallback((token, id, initialUserData = null) => {
     setAuthToken(token);
     setUserID(id);
     localStorage.setItem('authToken', token);
     localStorage.setItem('userID', id);
-    console.log('User logged in:', { token, id });
-    // No need to call fetchUserData here directly, the useEffect below will trigger
+    if (initialUserData) {
+        setUserData(initialUserData);
+    }
+    console.log('User logged in:', { token, id, initialUserData });
   }, []);
 
   // Function to handle user logout
   const logout = useCallback(() => {
     setAuthToken(null);
     setUserID(null);
-    setUserData(null); // NEW: Clear user data on logout
+    setUserData(null);
+    setCartCount(0); // Clear cart count on logout
     localStorage.removeItem('authToken');
     localStorage.removeItem('userID');
-    toast("Logout Successfully");
     console.log('User logged out.');
-    navigate('/'); // Changed to redirect to the main landing page as discussed
+    navigate('/');
   }, [navigate]);
 
-  // Effect to check auth status on initial load (existing necessary useEffect)
+  // Function to fetch cart count
+  const fetchCartCount = useCallback(async () => {
+    if (!authToken) {
+      setCartCount(0);
+      return;
+    }
+    try {
+      // Changed endpoint from /api/user/cart to /api/cart
+      const response = await fetch('http://localhost:5000/api/cart', { 
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok && data.cart && data.cart.items) {
+        setCartCount(data.cart.items.length);
+      } else {
+        setCartCount(0);
+      }
+    } catch (error) {
+      console.error('Error fetching cart count in AuthProvider:', error);
+      setCartCount(0);
+    }
+  }, [authToken]);
+
+
+  // Effect 1: Hydrate auth state from localStorage on initial load
   useEffect(() => {
     const storedToken = localStorage.getItem('authToken');
     const storedUserID = localStorage.getItem('userID');
@@ -59,64 +88,63 @@ export const AuthProvider = ({ children }) => {
       setAuthToken(null);
       setUserID(null);
     }
-    // setIsLoadingAuth(false); // We'll set this after user data is fetched, if a token exists
-  }, []); // Empty dependency array, runs once on mount
+  }, []);
 
 
-  // NEW: useEffect for JWT authentication to get user data
+  // Effect 2: Fetch user data from backend when authToken changes
   useEffect(() => {
     const fetchUserData = async () => {
-      // Only attempt to fetch user data if an authToken exists
       if (authToken) {
         try {
-          setIsLoadingAuth(true); // Start loading for user data fetch
-          const response = await fetch('http://localhost:5000/api/auth/user', { 
+          setIsLoadingAuth(true); 
+          const response = await fetch('http://localhost:5000/api/auth/user', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${authToken}`, // Send the JWT token
+              'Authorization': `Bearer ${authToken}`,
             },
           });
 
           if (response.ok) {
             const data = await response.json();
-            setUserData(data.userData); 
-            setUserID(data.userData.userID);
-            console.log('User data fetched:', data.userData);
+            if (data) { 
+                setUserData(data); 
+                setUserID(data._id); 
+                fetchCartCount(); // Fetch cart count after user data is loaded
+            } else {
+                console.error('AuthContext: User data missing in API response:', data);
+                logout(); 
+            }
           } else {
-            // Handle cases where token is invalid/expired during data fetch
             console.error('Failed to fetch user data:', response.status, response.statusText);
-            // If token is invalid/expired, automatically log out the user
-            logout(); // Use the logout function from this context
+            logout(); 
           }
         } catch (error) {
           console.error('Network error during user data fetch:', error);
-          // If there's a network error, also log out or show a relevant message
-          // For now, let's just logout as the token might be stale or connection lost
           logout(); 
         } finally {
-          setIsLoadingAuth(false); // Loading complete (success or failure)
+          setIsLoadingAuth(false); 
         }
       } else {
-        // If no authToken, set userData to null and stop loading
         setUserData(null);
         setIsLoadingAuth(false);
       }
     };
 
     fetchUserData();
-  }, [authToken, logout]); // Re-run this effect if authToken changes, or if logout function changes (unlikely)
-
+  }, [authToken, logout, fetchCartCount]); // Add fetchCartCount to dependencies
 
   // The value that will be provided to consumers of this context
   const contextValue = {
     authToken,
     userID,
-    userData, // NEW: Expose userData
-    isLoggedIn: !!authToken,
+    userData, 
+    isLoggedIn: !!authToken, 
     login,
     logout,
     isLoadingAuth,
+    cartCount,      // Expose cartCount
+    fetchCartCount, // Expose fetchCartCount function
   };
 
   return (
@@ -126,18 +154,15 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// NEW: Admin Protected Route component, exported from auth.js
+// Admin Protected Route component, exported from auth.js
 export const AdminProtectedRoute = ({ children }) => {
   const { isLoggedIn, userData, isLoadingAuth } = useAuth();
 
   if (isLoadingAuth) {
-    return <LoadingScreen />; // Show loading while auth context initializes
+    return <LoadingScreen />;
   }
 
-  // Check if logged in AND is admin based on userData.role
   if (!isLoggedIn || !userData || userData.role !== 'admin') {
-    // Redirect non-admins or unauthenticated users to home
-    // A separate alert or toast could be added here for better UX
     return <Navigate to="/home" replace />; 
   }
 

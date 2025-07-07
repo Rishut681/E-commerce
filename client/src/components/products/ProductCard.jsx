@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaStar, FaShoppingCart, FaHeart, FaSpinner } from 'react-icons/fa'; // Added FaSpinner
-import { useAuth } from '../../store/auth'; // Import useAuth
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { FaStar, FaShoppingCart, FaSpinner } from 'react-icons/fa'; // Removed FaHeart
+import { useAuth } from '../../store/auth';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 // --- Styled Components ---
 const ProductCardContainer = styled(motion.div)`
@@ -16,6 +17,13 @@ const ProductCardContainer = styled(motion.div)`
   flex-direction: column;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
+  box-sizing: border-box;
+
+  width: calc((100% / var(--products-per-view)) - (var(--gap-count) * var(--gap-size) / var(--products-per-view)));
+  flex-shrink: 0;
+  min-height: 350px;
+  min-width: 280px;
+
 
   &:hover {
     transform: translateY(-5px);
@@ -52,7 +60,7 @@ const ProductName = styled.h3`
 
 const ProductPrice = styled.p`
   font-size: 1.15rem;
-  color: #6c63ff; /* Consistent accent color */
+  color: #6c63ff;
   font-weight: bold;
   margin-bottom: 10px;
 `;
@@ -74,12 +82,12 @@ const ActionsBar = styled.div`
   padding: 10px 15px 15px;
   display: flex;
   gap: 10px;
-  justify-content: space-between;
+  justify-content: center; /* Centered as only one button */
   align-items: center;
   border-top: 1px solid #eee;
 `;
 
-const AddToCartButton = styled(motion.button)` /* Added motion for button animation */
+const AddToCartButton = styled(motion.button)`
   background-color: #6c63ff;
   color: white;
   padding: 10px 15px;
@@ -93,12 +101,12 @@ const AddToCartButton = styled(motion.button)` /* Added motion for button animat
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 3px 8px rgba(108, 99, 255, 0.2); /* Added shadow */
+  box-shadow: 0 3px 8px rgba(108, 99, 255, 0.2);
 
   &:hover {
     background-color: #5a54d4;
     transform: translateY(-2px);
-    box-shadow: 0 5px 12px rgba(108, 99, 255, 0.3); /* Enhanced shadow on hover */
+    box-shadow: 0 5px 12px rgba(108, 99, 255, 0.3);
   }
   &:active {
     transform: translateY(0);
@@ -113,29 +121,6 @@ const AddToCartButton = styled(motion.button)` /* Added motion for button animat
   }
 `;
 
-const WishlistButton = styled(motion.button)` /* Added motion for button animation */
-  background: none;
-  border: 1px solid #6c63ff;
-  border-radius: 6px;
-  color: #6c63ff;
-  padding: 10px;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    background-color: #6c63ff;
-    color: white;
-  }
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
 const Spinner = styled(FaSpinner)`
   animation: spin 1s linear infinite;
   margin-left: 5px;
@@ -147,15 +132,15 @@ const Spinner = styled(FaSpinner)`
 
 
 // --- ProductCard Component ---
-const ProductCard = ({ product, variants, onCartUpdate }) => { // Added onCartUpdate prop
-  const { isLoggedIn, authToken } = useAuth(); // Get isLoggedIn and authToken
+const ProductCard = React.forwardRef(({ product, variants, onCartUpdate }, ref) => {
+  const { isLoggedIn, authToken } = useAuth();
   const navigate = useNavigate();
-  const [addingToCart, setAddingToCart] = React.useState(false); // State for loading spinner
+  const [addingToCart, setAddingToCart] = useState(false);
 
   const displayRating = product.rating || 4.0; 
 
   const handleAddToCart = async (e) => {
-    e.stopPropagation(); // Prevent card click event from firing
+    e.stopPropagation();
 
     if (!isLoggedIn) {
       toast('Please log in to add items to your cart.');
@@ -163,10 +148,11 @@ const ProductCard = ({ product, variants, onCartUpdate }) => { // Added onCartUp
       return;
     }
 
-    setAddingToCart(true); // Start loading spinner
+    setAddingToCart(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/cart', {
+      // Changed endpoint from /api/user/cart to /api/cart
+      const response = await fetch('http://localhost:5000/api/cart', { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -174,7 +160,7 @@ const ProductCard = ({ product, variants, onCartUpdate }) => { // Added onCartUp
         },
         body: JSON.stringify({
           productId: product._id,
-          quantity: 1, // Always add 1 when clicking "Add to Cart"
+          quantity: 1,
         }),
       });
 
@@ -183,7 +169,7 @@ const ProductCard = ({ product, variants, onCartUpdate }) => { // Added onCartUp
       if (response.ok) {
         toast(data.message || `"${product.name}" added to cart successfully!`);
         if (onCartUpdate) {
-          onCartUpdate(); // Trigger cart count update in Navbar
+          onCartUpdate();
         }
       } else {
         toast(data.message || 'Failed to add item to cart.');
@@ -193,22 +179,16 @@ const ProductCard = ({ product, variants, onCartUpdate }) => { // Added onCartUp
       console.error('Network error adding to cart:', error);
       toast('Network error: Could not add item to cart.');
     } finally {
-      setAddingToCart(false); // Stop loading spinner
+      setAddingToCart(false);
     }
   };
 
-  const handleAddToWishlist = (e) => {
-    e.stopPropagation(); 
-    toast(`Added "${product.name}" to wishlist!`);
-  };
-
   const handleViewDetails = () => {
-    // Navigate to product detail page
     navigate(`/product/${product._id}`);
   };
 
   return (
-    <ProductCardContainer variants={variants} onClick={handleViewDetails}>
+    <ProductCardContainer variants={variants} onClick={handleViewDetails} ref={ref}>
       <ProductImage src={product.image} alt={product.name} onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/300x200/cccccc/333333?text=No+Image"; }} />
       <ProductInfo>
         <ProductName>{product.name}</ProductName>
@@ -236,12 +216,9 @@ const ProductCard = ({ product, variants, onCartUpdate }) => { // Added onCartUp
             </>
           )}
         </AddToCartButton>
-        <WishlistButton onClick={handleAddToWishlist} disabled={addingToCart}>
-          <FaHeart />
-        </WishlistButton>
       </ActionsBar>
     </ProductCardContainer>
   );
-};
+});
 
 export default ProductCard;
