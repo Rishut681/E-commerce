@@ -632,7 +632,7 @@ const DashboardPage = () => {
             </PromotionBanner>
             <Card> {/* Changed from MetricCard to Card to remove unnecessary metric styling */}
               <SectionHeader>My Profile</SectionHeader>
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
                 <Link to="/profile" style={{color: '#6c63ff', textDecoration: 'none', fontSize: '2.5rem'}}><FaUser /></Link>
                 <Link to="/settings" style={{color: '#6c63ff', textDecoration: 'none', fontSize: '2.5rem'}}><FaCog /></Link>
                 <Link to="/addresses" style={{color: '#6c63ff', textDecoration: 'none', fontSize: '2.5rem'}}><FaMapMarkerAlt /></Link>

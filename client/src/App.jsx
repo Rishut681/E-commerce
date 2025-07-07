@@ -16,6 +16,7 @@ import ContactPage from './pages/ContactPage';
 import ShopPage from './pages/ShopPage';
 import ProductManagementPage from './pages/Admin/ProductManagementPage'; // NEW: Import Admin Product Management Page
 import CategoriesPage from './pages/CategoriesPage';
+import CartPage from './pages/CartPage';
 
 import ErrorPage from './pages/ErrorPage'
 
@@ -66,6 +67,7 @@ function AppContent() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/cart" element={<CartPage />} />
 
           <Route path="/admin/products" element={
             <AdminProtectedRoute>

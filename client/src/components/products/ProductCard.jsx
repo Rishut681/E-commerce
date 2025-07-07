@@ -1,8 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaStar, FaShoppingCart, FaHeart } from 'react-icons/fa';
-import { toast } from "react-toastify";
+import { FaStar, FaShoppingCart, FaHeart, FaSpinner } from 'react-icons/fa'; // Added FaSpinner
+import { useAuth } from '../../store/auth'; // Import useAuth
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 // --- Styled Components ---
 const ProductCardContainer = styled(motion.div)`
@@ -78,7 +79,7 @@ const ActionsBar = styled.div`
   border-top: 1px solid #eee;
 `;
 
-const AddToCartButton = styled.button`
+const AddToCartButton = styled(motion.button)` /* Added motion for button animation */
   background-color: #6c63ff;
   color: white;
   padding: 10px 15px;
@@ -103,9 +104,16 @@ const AddToCartButton = styled.button`
     transform: translateY(0);
     box-shadow: 0 2px 5px rgba(108, 99, 255, 0.2);
   }
+
+  &:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
 `;
 
-const WishlistButton = styled.button`
+const WishlistButton = styled(motion.button)` /* Added motion for button animation */
   background: none;
   border: 1px solid #6c63ff;
   border-radius: 6px;
@@ -122,16 +130,71 @@ const WishlistButton = styled.button`
     background-color: #6c63ff;
     color: white;
   }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const Spinner = styled(FaSpinner)`
+  animation: spin 1s linear infinite;
+  margin-left: 5px;
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
 `;
 
 
 // --- ProductCard Component ---
-const ProductCard = ({ product, variants }) => {
+const ProductCard = ({ product, variants, onCartUpdate }) => { // Added onCartUpdate prop
+  const { isLoggedIn, authToken } = useAuth(); // Get isLoggedIn and authToken
+  const navigate = useNavigate();
+  const [addingToCart, setAddingToCart] = React.useState(false); // State for loading spinner
+
   const displayRating = product.rating || 4.0; 
 
-  const handleAddToCart = (e) => {
-    e.stopPropagation(); 
-    toast(`Added "${product.name}" to cart!`);
+  const handleAddToCart = async (e) => {
+    e.stopPropagation(); // Prevent card click event from firing
+
+    if (!isLoggedIn) {
+      toast('Please log in to add items to your cart.');
+      navigate('/login');
+      return;
+    }
+
+    setAddingToCart(true); // Start loading spinner
+
+    try {
+      const response = await fetch('http://localhost:5000/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          productId: product._id,
+          quantity: 1, // Always add 1 when clicking "Add to Cart"
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast(data.message || `"${product.name}" added to cart successfully!`);
+        if (onCartUpdate) {
+          onCartUpdate(); // Trigger cart count update in Navbar
+        }
+      } else {
+        toast(data.message || 'Failed to add item to cart.');
+        console.error('Error adding to cart:', data.message);
+      }
+    } catch (error) {
+      console.error('Network error adding to cart:', error);
+      toast('Network error: Could not add item to cart.');
+    } finally {
+      setAddingToCart(false); // Stop loading spinner
+    }
   };
 
   const handleAddToWishlist = (e) => {
@@ -140,21 +203,40 @@ const ProductCard = ({ product, variants }) => {
   };
 
   const handleViewDetails = () => {
-    toast(`Navigating to details for: ${product.name}`);
+    // Navigate to product detail page
+    navigate(`/product/${product._id}`);
   };
 
   return (
     <ProductCardContainer variants={variants} onClick={handleViewDetails}>
-      <ProductImage src={product.image} alt={product.name} />
+      <ProductImage src={product.image} alt={product.name} onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/300x200/cccccc/333333?text=No+Image"; }} />
       <ProductInfo>
         <ProductName>{product.name}</ProductName>
         <ProductPrice>${product.price.toFixed(2)}</ProductPrice>
+        <ProductRating>
+          {Array.from({ length: 5 }, (_, i) => (
+            <FaStar 
+              key={i} 
+              color={i < Math.floor(displayRating) ? "#f39c12" : "#e0e0e0"} 
+              className={i < Math.floor(displayRating) ? "" : "empty-star"}
+            />
+          ))} 
+          <span>({displayRating.toFixed(1)})</span>
+        </ProductRating>
       </ProductInfo>
       <ActionsBar>
-        <AddToCartButton onClick={handleAddToCart}>
-          <FaShoppingCart /> Add to Cart
+        <AddToCartButton onClick={handleAddToCart} disabled={addingToCart}>
+          {addingToCart ? (
+            <>
+              Adding... <Spinner />
+            </>
+          ) : (
+            <>
+              <FaShoppingCart /> Add to Cart
+            </>
+          )}
         </AddToCartButton>
-        <WishlistButton onClick={handleAddToWishlist}>
+        <WishlistButton onClick={handleAddToWishlist} disabled={addingToCart}>
           <FaHeart />
         </WishlistButton>
       </ActionsBar>

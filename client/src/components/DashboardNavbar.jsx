@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react'; // Added useCallback
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   FaShoppingCart, FaUserCircle, FaSearch, FaSignOutAlt, FaUser, FaBoxOpen,
-  FaLaptop, FaTshirt, FaHome, FaBook, FaBoxOpen as FaBoxOpenAlt, FaRunning, FaCar, FaUtensils, // Specific category icons
-  FaChevronDown, FaChevronUp, FaRegBell, FaTools// For dropdown arrow
+  FaLaptop, FaTshirt, FaHome, FaBook, FaRunning, FaCar, FaUtensils, 
+  FaChevronDown, FaChevronUp, FaRegBell, FaTools, FaHeart, FaMapMarkerAlt, FaCreditCard, FaSpinner,FaChevronRight// Added FaSpinner
 } from 'react-icons/fa';
+import SearchBar from "./common/SearchBar";
 
 // Assuming useAuth is correctly imported from your store/auth
 import { useAuth } from '../store/auth'; 
@@ -214,22 +215,100 @@ const dropIn = {
 
 const DashboardNavbar = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, userData, logout } = useAuth();
-  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false); // Renamed for clarity
-  const [isCategoriesDropdownOpen, setIsCategoriesDropdownOpen] = useState(false); // NEW state for categories dropdown
-  const [cartItemCount] = useState(3); 
+  const { isLoggedIn, userData, logout, authToken } = useAuth(); // Get authToken from useAuth
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false); 
+  const [isCategoriesDropdownOpen, setIsCategoriesDropdownOpen] = useState(false); 
+  const [cartItemCount, setCartItemCount] = useState(0); // Initialize cart count to 0
   const isAdmin = isLoggedIn && userData && userData.role === 'admin'; 
-  // Dummy Categories Data with Icons (Ideally, fetch this from backend /api/categories)
-  const categories = [
-    { id: 'electronics', name: 'Electronics', icon: <FaLaptop /> },
-    { id: 'apparel', name: 'Apparel', icon: <FaTshirt /> },
-    { id: 'home_kitchen', name: 'Home & Kitchen', icon: <FaHome /> },
-    { id: 'books', name: 'Books', icon: <FaBook /> },
-    { id: 'sports_outdoors', name: 'Sports & Outdoors', icon: <FaRunning /> },
-    { id: 'automotive', name: 'Automotive', icon: <FaCar /> },
-    { id: 'groceries', name: 'Groceries', icon: <FaUtensils /> },
-    { id: 'health_beauty', name: 'Health & Beauty', icon: <FaBoxOpenAlt /> }, // Using FaBoxOpenAlt to avoid conflict
-  ];
+
+  // State for fetched categories
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [categoriesError, setCategoriesError] = useState(null);
+
+  // Define how many categories to show directly in the dropdown
+  const maxCategoriesToShow = 6; 
+
+  // Map category names to relevant icons
+  const categoryIconsMap = {
+    'Electronics': <FaLaptop />,
+    'Wearables': <FaRegBell />, // Using FaRegBell as a placeholder for wearables
+    'Home & Kitchen': <FaHome />,
+    'Apparel': <FaTshirt />,
+    "Men's Clothing": <FaUser />, // Using FaUser as a placeholder
+    "Women's Clothing": <FaUser />, // Using FaUser as a placeholder
+    "Footwear": <FaShoppingCart />, // Using FaShoppingCart as a placeholder
+    "Smartphones": <FaLaptop />, // Using FaLaptop as a placeholder
+    "Laptops": <FaLaptop />,
+    "Televisions": <FaHome />, // Using FaHome as a placeholder
+    "Audio": <FaRegBell />, // Using FaRegBell as a placeholder
+    "Books": <FaBook />,
+    'Sports & Outdoors': <FaRunning />,
+    'Automotive': <FaCar />,
+    'Groceries': <FaUtensils />,
+    'Health & Beauty': <FaHeart />, // Using FaHeart as a placeholder
+    'Toys & Games': <FaBoxOpen />, // Using FaBoxOpen as a placeholder
+    'Furniture': <FaHome />, // Using FaHome as a placeholder
+    'Kitchen Appliances': <FaUtensils />, // Using FaUtensils as a placeholder
+    'Gaming': <FaLaptop />, // Using FaLaptop as a placeholder
+    'Cameras': <FaRegBell />, // Using FaRegBell as a placeholder
+    'Jewelry': <FaHeart />, // Using FaHeart as a placeholder
+    'Bags & Luggage': <FaBoxOpen />, // Using FaBoxOpen as a placeholder
+    // Add more mappings as needed based on your actual category names
+  };
+
+  // Fetch categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setLoadingCategories(true);
+      setCategoriesError(null);
+      try {
+        const response = await fetch('http://localhost:5000/api/categories');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setCategories(data || []);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setCategoriesError('Failed to load categories.');
+        setCategories([]);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Fetch cart count from backend
+  const fetchCartCount = useCallback(async () => {
+    if (!isLoggedIn || !authToken) {
+      setCartItemCount(0); // Reset count if not logged in
+      return;
+    }
+    try {
+      const response = await fetch('http://localhost:5000/api/cart', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok && data.cart && data.cart.items) {
+        setCartItemCount(data.cart.items.length);
+      } else {
+        setCartItemCount(0);
+      }
+    } catch (error) {
+      console.error('Error fetching cart count:', error);
+      setCartItemCount(0); // Default to 0 on error
+    }
+  }, [isLoggedIn, authToken]);
+
+  useEffect(() => {
+    fetchCartCount();
+    // Potentially set up an interval or listen to cart changes (more advanced)
+  }, [fetchCartCount]);
+
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -266,7 +345,7 @@ const DashboardNavbar = () => {
   };
 
   const handleCategorySelect = (categoryName) => {
-    handleNavigation(`/shop?category=${categoryName}`); // Navigate to shop with category filter
+    handleNavigation(`/shop?category=${encodeURIComponent(categoryName)}`); // Navigate to shop with category filter
   };
 
   return (
@@ -280,7 +359,7 @@ const DashboardNavbar = () => {
           <NavLinkStyled to="/home">Home</NavLinkStyled>
           <NavLinkStyled to="/shop">Shop</NavLinkStyled>
           
-          {/* NEW: Categories Dropdown */}
+          {/* Categories Dropdown */}
           <CategoriesNavLink 
             onClick={handleCategoryDropdownClick} 
             className="categories-dropdown-container"
@@ -294,20 +373,42 @@ const DashboardNavbar = () => {
                   exit="exit"
                   variants={dropIn}
                 >
-                  {/* Option to view all categories page */}
-                  <CategoriesDropdownItem onClick={() => handleNavigation('/categories')}>
-                      <FaBoxOpenAlt /> All Categories
-                  </CategoriesDropdownItem>
-                  <div style={{ borderTop: '1px solid #eee', margin: '5px 0' }} /> {/* Divider */}
+                  {loadingCategories ? (
+                    <DropdownItem style={{ justifyContent: 'center' }}>
+                      <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> Loading...
+                    </DropdownItem>
+                  ) : categoriesError ? (
+                    <DropdownItem style={{ color: '#dc3545', justifyContent: 'center' }}>
+                      Error loading categories.
+                    </DropdownItem>
+                  ) : categories.length === 0 ? (
+                    <DropdownItem style={{ justifyContent: 'center' }}>
+                      No categories found.
+                    </DropdownItem>
+                  ) : (
+                    <>
+                      {/* Option to view all categories page */}
+                      <CategoriesDropdownItem onClick={() => handleNavigation('/categories')}>
+                          <FaBoxOpen /> All Categories
+                      </CategoriesDropdownItem>
+                      <div style={{ borderTop: '1px solid #eee', margin: '5px 0' }} /> {/* Divider */}
 
-                  {categories.map(category => (
-                    <CategoriesDropdownItem 
-                      key={category.id} 
-                      onClick={() => handleCategorySelect(category.name)}
-                    >
-                      {category.icon} {category.name}
-                    </CategoriesDropdownItem>
-                  ))}
+                      {categories.slice(0, maxCategoriesToShow).map(category => ( // Limit categories displayed
+                        <CategoriesDropdownItem 
+                          key={category._id} // Use category._id as key
+                          onClick={() => handleCategorySelect(category.name)}
+                        >
+                          {categoryIconsMap[category.name] || <FaBoxOpen />} {/* Fallback icon */}
+                          {category.name}
+                        </CategoriesDropdownItem>
+                      ))}
+                      {categories.length > maxCategoriesToShow && ( // Show "More" if there are more categories
+                        <DropdownItem onClick={() => handleNavigation('/categories')}>
+                          <FaChevronRight /> More Categories...
+                        </DropdownItem>
+                      )}
+                    </>
+                  )}
                 </CategoriesDropdownMenu>
               )}
             </AnimatePresence>
@@ -323,14 +424,17 @@ const DashboardNavbar = () => {
 
         <UserActions>
           <IconWrapper>
-            <FaSearch />
+            <SearchBar /> {/* SearchBar component */}
           </IconWrapper>
           <IconWrapper>
-            <FaRegBell />
+            <FaRegBell /> {/* Notifications icon */}
           </IconWrapper>
-          <IconWrapper>
+          <IconWrapper onClick={() => handleNavigation('/cart')}> {/* Cart icon */}
             <FaShoppingCart />
             {cartItemCount > 0 && <CartCount>{cartItemCount}</CartCount>}
+          </IconWrapper>
+          <IconWrapper onClick={() => handleNavigation('/wishlist')}> {/* Wishlist icon */}
+            <FaHeart />
           </IconWrapper>
           <UserDropdownContainer className="user-dropdown-container">
             <IconWrapper onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}>
@@ -338,7 +442,7 @@ const DashboardNavbar = () => {
             </IconWrapper>
             <AnimatePresence>
               {isUserDropdownOpen && (
-                <UserDropdownMenu // Renamed for clarity
+                <UserDropdownMenu 
                   initial="hidden"
                   animate="visible"
                   exit="exit"
@@ -346,11 +450,20 @@ const DashboardNavbar = () => {
                 >
                   {isLoggedIn ? (
                     <>
-                      <DropdownItem onClick={() => handleNavigation('/profile')}>
-                        <FaUser /> Profile
+                      <DropdownItem onClick={() => handleNavigation('/account')}> {/* General Account/Profile page */}
+                        <FaUser /> My Account
                       </DropdownItem>
                       <DropdownItem onClick={() => handleNavigation('/orders')}>
                         <FaBoxOpen /> Orders
+                      </DropdownItem>
+                      <DropdownItem onClick={() => handleNavigation('/wishlist')}>
+                        <FaHeart /> Wishlist
+                      </DropdownItem>
+                      <DropdownItem onClick={() => handleNavigation('/addresses')}>
+                        <FaMapMarkerAlt /> Addresses
+                      </DropdownItem>
+                      <DropdownItem onClick={() => handleNavigation('/payment-methods')}>
+                        <FaCreditCard /> Payment Methods
                       </DropdownItem>
                       <DropdownItem onClick={handleLogout}>
                         <FaSignOutAlt /> Logout

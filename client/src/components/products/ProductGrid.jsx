@@ -41,7 +41,7 @@ const itemVariants = {
 
 
 // --- ProductGrid Component ---
-const ProductGrid = ({ products }) => {
+const ProductGrid = ({ products, onCartUpdate }) => { // Accept onCartUpdate prop
   if (!products || products.length === 0) {
     return null; // Or a message "No products to display"
   }
@@ -53,7 +53,7 @@ const ProductGrid = ({ products }) => {
       animate="visible"
     >
       {products.map(product => (
-        <ProductCard key={product._id} product={product} variants={itemVariants} />
+        <ProductCard key={product._id} product={product} variants={itemVariants} onCartUpdate={onCartUpdate} />
       ))}
     </GridContainer>
   );

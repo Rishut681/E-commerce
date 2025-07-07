@@ -4,6 +4,7 @@ const app = express();
 const authRoute = require("./router/auth-router");
 const productRoute = require("./router/product-router");
 const contactRoute = require("./router/contact-router");
+const cartRoute = require("./router/cart-router");
 const connectDB = require("./utils/db");
 const errorHandler = require('./middlewares/error-middleware');
 const cors = require("cors");
@@ -23,6 +24,7 @@ app.use(express.json());
 app.use("/api/auth", authRoute);
 app.use("/api/form", contactRoute);
 app.use("/api", productRoute);
+app.use("/api/cart", cartRoute);
 
 app.use(errorHandler);
 
