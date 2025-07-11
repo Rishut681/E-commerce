@@ -71,59 +71,69 @@ Follow these steps to set up and run the project locally.
 ```bash
 git clone <repository_url>
 cd nexamart-ecommerce # Or whatever your project root folder is called
+```
 
 2. Backend Setup
 Navigate to the server (or backend) directory:
 
 ```bash
 cd server
+```
+
 Install backend dependencies:
 
-Bash
-
+```bash
 npm install
+```
+
 Create a .env file in the server directory and add the following environment variables:
 
+```
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=a_very_strong_and_secret_key_for_jwt
 PORT=5000
+```
 Replace your_mongodb_connection_string with your MongoDB URI (e.g., from MongoDB Atlas).
 
 Replace a_very_strong_and_secret_key_for_jwt with a unique, strong secret key.
 
 Start the backend server:
 
-Bash
 
+```Bash
 npm start
+
 # Or if you have nodemon installed:
 # nodemon server.js
+```
 The backend server will run on http://localhost:5000.
 
 3. Frontend Setup
 Open a new terminal and navigate to the client (or frontend) directory:
 
-Bash
-
+```Bash
 cd ../client
 Install frontend dependencies:
+```
 
-Bash
-
+```Bash
 npm install
-Create a .env file in the client directory and add the following environment variable:
+```
 
+Create a .env file in the client directory and add the following environment variable:
+```
 REACT_APP_API_URL=http://localhost:5000
+```
 This points your frontend to your local backend.
 
 Start the frontend development server:
 
-Bash
-
+```Bash
 npm run dev
 The frontend application will typically open in your browser at http://localhost:5173 (or another available port).
+```
 
-🌍 Deployment
+## 🌍 Deployment
 This project can be deployed using free-tier services:
 
 Database: MongoDB Atlas (M0 Sandbox)
@@ -134,8 +144,8 @@ Frontend: Netlify or Vercel (Free Static Site Hosting)
 
 Refer to the documentation of each service for detailed deployment instructions. Remember to update your backend's CORS settings and frontend's REACT_APP_API_URL to reflect your deployed URLs.
 
-🤝 Contributing
+## 🤝 Contributing
 Contributions are welcome! If you have any suggestions, bug reports, or want to contribute to the codebase, please feel free to open an issue or submit a pull request.
 
-📄 License
+## 📄 License
 This project is licensed under the MIT License - see the LICENSE file for details.

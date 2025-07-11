@@ -11,9 +11,9 @@ const cors = require("cors");
 
 const corsOptions = {
     origin: [
+        "https://nexa-ecommerce.netlify.app",
         "http://localhost:5173",
-        "http://192.168.30.12:5173",
-        "https://your-frontend-app.netlify.app"
+        "http://192.168.30.12:5173"
     ],
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
