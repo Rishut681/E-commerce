@@ -258,7 +258,7 @@ const DashboardNavbar = () => {
   const { isLoggedIn, userData, logout, authToken, cartCount, fetchCartCount } = useAuth(); // Destructure cartCount and fetchCartCount
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false); 
   const [isCategoriesDropdownOpen, setIsCategoriesDropdownOpen] = useState(false); 
-  const isAdmin = isLoggedIn && userData && userData.role === 'admin'; 
+  const isAdmin = isLoggedIn && userData && userData.userData.role === 'admin'; 
 
   // State for fetched categories
   const [categories, setCategories] = useState([]);

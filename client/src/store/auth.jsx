@@ -162,7 +162,7 @@ export const AdminProtectedRoute = ({ children }) => {
     return <LoadingScreen />;
   }
 
-  if (!isLoggedIn || !userData || userData.role !== 'admin') {
+  if (!isLoggedIn || !userData || userData.userData.role !== 'admin') {
     return <Navigate to="/home" replace />; 
   }
 
