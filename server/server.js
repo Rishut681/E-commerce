@@ -11,7 +11,7 @@ const cors = require("cors");
 
 const corsOptions = {
     origin: [
-        "https://nexa-ecommerce.netlify.app",
+        "https://nexa-ecommerce.vercel.app",
         "http://localhost:5173",
         "http://192.168.30.12:5173"
     ],
