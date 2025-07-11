@@ -264,7 +264,7 @@ const ProductManagementPage = () => {
   // NEW: Fetch Categories from backend
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/categories'); // Adjust to your backend URL
+      const response = await fetch('https://e-commerce-44nm.onrender.com/api/categories'); // Adjust to your backend URL
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -281,7 +281,7 @@ const ProductManagementPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:5000/api/products'); // Using localhost
+      const response = await fetch('https://e-commerce-44nm.onrender.com/api/products'); // Using localhost
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -319,7 +319,7 @@ const ProductManagementPage = () => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       setLoading(true); 
       try {
-        const response = await fetch(`http://localhost:5000/api/products/${productId}`, { // Using localhost
+        const response = await fetch(`https://e-commerce-44nm.onrender.com/api/products/${productId}`, { // Using localhost
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('authToken')}` 

@@ -152,7 +152,7 @@ const ProductCard = React.forwardRef(({ product, variants, onCartUpdate }, ref) 
 
     try {
       // Changed endpoint from /api/user/cart to /api/cart
-      const response = await fetch('http://localhost:5000/api/cart', { 
+      const response = await fetch('https://e-commerce-44nm.onrender.com/api/cart', { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

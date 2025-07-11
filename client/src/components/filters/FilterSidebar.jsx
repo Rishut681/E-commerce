@@ -236,7 +236,7 @@ const FilterSidebar = ({ currentFilters, onFilterChange, onResetFilters }) => {
       setLoadingCategories(true);
       setCategoryFetchError(null);
       try {
-        const response = await fetch('http://localhost:5000/api/categories'); // Using localhost
+        const response = await fetch('https://e-commerce-44nm.onrender.com/api/categories'); // Using localhost
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }

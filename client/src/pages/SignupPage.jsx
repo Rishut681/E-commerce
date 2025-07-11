@@ -361,7 +361,7 @@ const SignupPage = () => {
     try {
       // --- Actual Backend API Call ---
       // Send only the data your backend expects for registration: name, email, password
-      const response = await fetch("http://localhost:5000/api/auth/register", {
+      const response = await fetch("https://e-commerce-44nm.onrender.com/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

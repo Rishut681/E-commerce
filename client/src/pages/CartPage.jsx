@@ -356,7 +356,7 @@ const CartPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:5000/api/cart', { 
+      const response = await fetch('https://e-commerce-44nm.onrender.com/api/cart', { 
         headers: {
           'Authorization': `Bearer ${authToken}`,
         },
@@ -386,7 +386,7 @@ const CartPage = () => {
   const handleUpdateQuantity = async (productId, newQuantity) => {
     setUpdatingItemId(productId);
     try {
-      const response = await fetch(`http://localhost:5000/api/cart/${productId}`, { 
+      const response = await fetch(`https://e-commerce-44nm.onrender.com/api/cart/${productId}`, { 
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -418,7 +418,7 @@ const CartPage = () => {
     }
     setUpdatingItemId(productId);
     try {
-      const response = await fetch(`http://localhost:5000/api/cart/${productId}`, { 
+      const response = await fetch(`https://e-commerce-44nm.onrender.com/api/cart/${productId}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -448,7 +448,7 @@ const CartPage = () => {
     }
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/cart', { 
+      const response = await fetch('https://e-commerce-44nm.onrender.com/api/cart', { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${authToken}`,

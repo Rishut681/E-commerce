@@ -179,7 +179,7 @@ const ShopPage = () => {
     queryParams.append('limit', itemsPerPage);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/products?${queryParams.toString()}`); 
+      const response = await fetch(`https://e-commerce-44nm.onrender.com/api/products?${queryParams.toString()}`); 
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

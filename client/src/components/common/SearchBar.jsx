@@ -254,7 +254,7 @@ const SearchBar = () => { // Removed onSearchSubmit prop as navigation is handle
     setResultsError(null);
     try {
       // Fetch products
-      const productResponse = await fetch(`http://localhost:5000/api/products?search=${encodeURIComponent(query)}&limit=5`);
+      const productResponse = await fetch(`https://e-commerce-44nm.onrender.com/api/products?search=${encodeURIComponent(query)}&limit=5`);
       if (!productResponse.ok) {
         throw new Error(`HTTP error! status: ${productResponse.status}`);
       }
@@ -262,7 +262,7 @@ const SearchBar = () => { // Removed onSearchSubmit prop as navigation is handle
       const fetchedProducts = productData.products || [];
 
       // Fetch all categories and filter client-side (as category API doesn't support search directly)
-      const categoryResponse = await fetch('http://localhost:5000/api/categories');
+      const categoryResponse = await fetch('https://e-commerce-44nm.onrender.com/api/categories');
       if (!categoryResponse.ok) {
         throw new Error(`HTTP error! status: ${categoryResponse.status}`);
       }

@@ -478,7 +478,7 @@ const DashboardPage = () => {
     const fetchCategories = async () => {
       setLoadingCategories(true);
       try {
-        const res = await fetch('http://localhost:5000/api/categories'); 
+        const res = await fetch('https://e-commerce-44nm.onrender.com/api/categories'); 
         const data = await res.json();
         setCategories(data);
       } catch (e) {
@@ -490,7 +490,7 @@ const DashboardPage = () => {
     const fetchProducts = async () => {
       setLoadingProducts(true);
       try {
-        const res = await fetch('http://localhost:5000/api/products?limit=20&sort=newest'); 
+        const res = await fetch('https://e-commerce-44nm.onrender.com/api/products?limit=20&sort=newest'); 
         const data = await res.json();
         setAllProducts(data.products);
       } catch (e) {

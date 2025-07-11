@@ -224,8 +224,8 @@ const ProductForm = ({ productToEdit, onClose, onSuccess, categories }) => {
 
     try {
       const url = isEditing 
-        ? `http://localhost:5000/api/products/${productToEdit._id}`
-        : 'http://localhost:5000/api/products';
+        ? `https://e-commerce-44nm.onrender.com/api/products/${productToEdit._id}`
+        : 'https://e-commerce-44nm.onrender.com/api/products';
       
       const method = isEditing ? 'PUT' : 'POST';
 

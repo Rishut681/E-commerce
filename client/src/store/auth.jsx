@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
     }
     try {
       // Changed endpoint from /api/user/cart to /api/cart
-      const response = await fetch('http://localhost:5000/api/cart', { 
+      const response = await fetch('https://e-commerce-44nm.onrender.com/api/cart', { 
         headers: {
           'Authorization': `Bearer ${authToken}`,
         },
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }) => {
       if (authToken) {
         try {
           setIsLoadingAuth(true); 
-          const response = await fetch('http://localhost:5000/api/auth/user', {
+          const response = await fetch('https://e-commerce-44nm.onrender.com/api/auth/user', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
