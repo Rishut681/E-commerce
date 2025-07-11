@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { 
   FaShoppingCart, FaUserCircle, FaSearch, FaSignOutAlt, FaUser, FaBoxOpen,
   FaLaptop, FaTshirt, FaHome, FaBook, FaRunning, FaCar, FaUtensils, 
-  FaChevronDown, FaChevronUp, FaRegBell, FaTools, FaHeart, FaMapMarkerAlt, FaCreditCard, FaSpinner // Added FaSpinner
+  FaChevronDown, FaChevronUp, FaRegBell, FaTools, FaHeart, FaMapMarkerAlt, FaCreditCard, FaSpinner, FaChevronRight // Added FaSpinner
 } from 'react-icons/fa';
 import SearchBar from "./common/SearchBar";
 

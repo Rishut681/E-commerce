@@ -12,6 +12,7 @@ const cors = require("cors");
 const corsOptions = {
     origin: [
         "https://nexa-ecommerce.vercel.app",
+        "https://vercel.com/rishu-rajs-projects-3313f8d7/nexa-ecommerce",
         "http://localhost:5173",
         "http://192.168.30.12:5173"
     ],
