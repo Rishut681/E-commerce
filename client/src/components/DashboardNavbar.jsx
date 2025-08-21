@@ -476,9 +476,6 @@ const DashboardNavbar = () => {
                       <DropdownItem onClick={() => handleNavigation('/orders')}>
                         <FaBoxOpen /> Orders
                       </DropdownItem>
-                      <DropdownItem onClick={() => handleNavigation('/wishlist')}>
-                        <FaHeart /> Wishlist
-                      </DropdownItem>
                       <DropdownItem onClick={() => handleNavigation('/addresses')}>
                         <FaMapMarkerAlt /> Addresses
                       </DropdownItem>

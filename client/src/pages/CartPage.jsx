@@ -338,6 +338,7 @@ const pageVariants = {
 // --- CartPage Component ---
 
 const CartPage = () => {
+  // We'll use the user and authToken from the useAuth hook for authentication
   const { isLoggedIn, authToken, isLoadingAuth, fetchCartCount } = useAuth();
   const navigate = useNavigate();
 
@@ -356,7 +357,7 @@ const CartPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('https://e-commerce-44nm.onrender.com/api/cart', { 
+      const response = await fetch('https://e-commerce-44nm.onrender.com/api/cart', {
         headers: {
           'Authorization': `Bearer ${authToken}`,
         },
@@ -386,7 +387,7 @@ const CartPage = () => {
   const handleUpdateQuantity = async (productId, newQuantity) => {
     setUpdatingItemId(productId);
     try {
-      const response = await fetch(`https://e-commerce-44nm.onrender.com/api/cart/${productId}`, { 
+      const response = await fetch(`https://e-commerce-44nm.onrender.com/api/cart/${productId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -398,27 +399,26 @@ const CartPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        toast(data.message);
+        toast.success(data.message); // Updated to use a success toast
         fetchCart();
       } else {
-        toast(data.message || 'Failed to update quantity.');
+        toast.error(data.message || 'Failed to update quantity.'); // Updated to use an error toast
         console.error('Error updating quantity:', data.message);
       }
     } catch (error) {
       console.error('Network error updating quantity:', error);
-      toast('Network error: Could not update quantity.');
+      toast.error('Network error: Could not update quantity.'); // Updated to use an error toast
     } finally {
       setUpdatingItemId(null);
     }
   };
 
   const handleRemoveItem = async (productId) => {
-    if (!window.confirm("Are you sure you want to remove this item from your cart?")) {
-      return;
-    }
+    // Removed the blocking window.confirm dialog
+    // A simple toast notification will be used for feedback instead
     setUpdatingItemId(productId);
     try {
-      const response = await fetch(`https://e-commerce-44nm.onrender.com/api/cart/${productId}`, { 
+      const response = await fetch(`https://e-commerce-44nm.onrender.com/api/cart/${productId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -428,27 +428,26 @@ const CartPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        toast(data.message);
+        toast.info(data.message); // Updated to use an info toast
         fetchCart();
       } else {
-        toast(data.message || 'Failed to remove item.');
+        toast.error(data.message || 'Failed to remove item.');
         console.error('Error removing item:', data.message);
       }
     } catch (error) {
       console.error('Network error removing item:', error);
-      toast('Network error: Could not remove item.');
+      toast.error('Network error: Could not remove item.');
     } finally {
       setUpdatingItemId(null);
     }
   };
 
   const handleClearCart = async () => {
-    if (!window.confirm("Are you sure you want to clear your entire cart? This action cannot be undone.")) {
-      return;
-    }
+    // Removed the blocking window.confirm dialog
+    // A simple toast notification will be used for feedback instead
     setLoading(true);
     try {
-      const response = await fetch('https://e-commerce-44nm.onrender.com/api/cart', { 
+      const response = await fetch('https://e-commerce-44nm.onrender.com/api/cart', {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -458,23 +457,29 @@ const CartPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        toast(data.message);
+        toast.info(data.message);
         setCart({ user: isLoggedIn ? authToken : null, items: [], totalAmount: 0 });
         fetchCartCount();
       } else {
-        toast(data.message || 'Failed to clear cart.');
+        toast.error(data.message || 'Failed to clear cart.');
         console.error('Error clearing cart:', data.message);
       }
     } catch (error) {
       console.error('Network error clearing cart:', error);
-      toast('Network error: Could not clear cart.');
+      toast.error('Network error: Could not clear cart.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleCheckout = () => {
-    toast("Proceeding to checkout! (Functionality not yet implemented)");
+    // Check if the cart has items before proceeding
+    if (!cart || !cart.items || cart.items.length === 0) {
+      toast.error('Your cart is empty. Please add items before checking out.');
+      return;
+    }
+    // The previous logic was correct in navigating, so we'll just navigate
+    navigate('/checkout');
   };
 
 
@@ -484,7 +489,7 @@ const CartPage = () => {
         <DashboardNavbar />
         <MainContentWrapper style={{ justifyContent: 'center', alignItems: 'center' }}>
           <MessageContainer>
-            <FaSpinner />
+            <FaSpinner className="animate-spin" />
             <p>Loading cart...</p>
           </MessageContainer>
         </MainContentWrapper>
@@ -539,8 +544,7 @@ const CartPage = () => {
           <CartSummaryContainer>
             <CartItemsList>
               {cart.items.map((item) => (
-                <CartItemCard key={item.productId._id}> {/* Use item.productId._id as key */}
-                  {/* Access image, name, price directly from item as they are denormalized */}
+                <CartItemCard key={item.productId._id}>
                   <img src={item.image || 'https://placehold.co/100x100/cccccc/333333?text=No+Image'} alt={item.name} />
                   <div className="item-details">
                     <span className="item-name">{item.name}</span>
@@ -554,12 +558,12 @@ const CartPage = () => {
                         <FaMinus />
                       </button>
                       <span className="item-quantity">
-                        {updatingItemId === item.productId._id ? <FaSpinner style={{ animation: 'spin 1s linear infinite' }} /> : item.quantity}
+                        {updatingItemId === item.productId._id ? <FaSpinner className="animate-spin" /> : item.quantity}
                       </span>
                       <button
                         className="quantity-button"
                         onClick={() => handleUpdateQuantity(item.productId._id, item.quantity + 1)}
-                        disabled={item.quantity >= item.productId.stock || updatingItemId === item.productId._id} // Assuming stock is available via populated productId
+                        disabled={item.quantity >= item.productId.stock || updatingItemId === item.productId._id}
                       >
                         <FaPlus />
                       </button>
