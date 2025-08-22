@@ -18,6 +18,8 @@ import ShopPage from './pages/ShopPage';
 import ProductManagementPage from './pages/Admin/ProductManagementPage'; // NEW: Import Admin Product Management Page
 import CategoriesPage from './pages/CategoriesPage';
 import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
+import OrdersPage from './pages/OrdersPage';
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -67,6 +69,8 @@ function AppContent() {
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
 
           <Route path="/admin/products" element={
             <AdminProtectedRoute>

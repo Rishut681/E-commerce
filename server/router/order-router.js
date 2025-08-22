@@ -1,12 +1,17 @@
-// server/routes/orderRoute.js
-const express = require('express');
-const { createCheckoutSession, placeOrder, getUserOrders } = require('../controllers/order-controller');
-const isAuthenticated = require("../middlewares/auth-middleware");
+const express = require("express");
+const { createOrder, getUserOrders, getAllOrders } = require("../controllers/order-controller");
+const authMiddleware = require("../middlewares/auth-middleware");
 
 const router = express.Router();
 
-router.post('/create-checkout-session', isAuthenticated, createCheckoutSession);
-router.post('/place-order', isAuthenticated, placeOrder);
-router.get('/', isAuthenticated, getUserOrders);
+// ✅ Create new order (after successful payment)
+router.post("/", authMiddleware, createOrder);
+
+// ✅ Get logged-in user's orders
+router.get("/my-orders", authMiddleware, getUserOrders);
+
+// ✅ Get all orders (admin only)
+router.get("/", authMiddleware, getAllOrders);
 
 module.exports = router;
+
