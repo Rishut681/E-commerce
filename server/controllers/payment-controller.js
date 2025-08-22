@@ -74,3 +74,4 @@ const stripeWebhook = async (req, res) => {
 };
 
 module.exports = { createCheckoutSession, stripeWebhook };
+
