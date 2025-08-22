@@ -24,8 +24,8 @@ const corsOptions = {
     exposedHeaders: 'x-auth-token'
 };
 
-app.use("/api/payment", paymentRoute);
 app.use(cors(corsOptions));
+app.use("/api/payment", paymentRoute);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
