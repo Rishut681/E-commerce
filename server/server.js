@@ -6,6 +6,7 @@ const productRoute = require("./router/product-router");
 const contactRoute = require("./router/contact-router");
 const cartRoute = require("./router/cart-router");
 const orderRoutes = require("./router/order-router");
+const paymentRoute = require("./router/payment-router");
 const connectDB = require("./utils/db");
 const errorHandler = require('./middlewares/error-middleware');
 const cors = require("cors");
@@ -23,9 +24,11 @@ const corsOptions = {
     exposedHeaders: 'x-auth-token'
 };
 
+app.use("/api/payment", paymentRoute);
 app.use(cors(corsOptions));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRoute);
 app.use("/api/form", contactRoute);
