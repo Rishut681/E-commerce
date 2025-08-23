@@ -25,11 +25,11 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use("/api/payment", paymentRoute);
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
+app.use("/api/payment", paymentRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/form", contactRoute);
 app.use("/api", productRoute);

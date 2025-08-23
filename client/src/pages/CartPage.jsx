@@ -479,18 +479,7 @@ const CartPage = () => {
       return;
     }
 
-    // Normalize for backend
-    const itemsForCheckout = cart.items.map((it) => ({
-      productId: it.productId?._id || it.productId,
-      name: it.name,
-      image: it.image,
-      price: it.price,
-      quantity: it.quantity,
-    }));
-
-    localStorage.setItem("checkoutItems", JSON.stringify(itemsForCheckout));
-
-    // The previous logic was correct in navigating, so we'll just navigate
+    localStorage.setItem("checkoutItems", JSON.stringify(cart.items));
     navigate('/checkout');
   };
 
