@@ -26,7 +26,8 @@ exports.createCheckoutSession = async (req, res) => {
       cancel_url: "https://nexa-ecommerce.vercel.app/cancel",
       client_reference_id: req.user ? req.user.id : null,
       metadata: {
-        items: JSON.stringify(items),
+        userId: req.userID || "guest",
+        productIds: items.map((i) => i.productId?._id || i._id).join(","), // only IDs
       },
     });
 
