@@ -20,6 +20,8 @@ import CategoriesPage from './pages/CategoriesPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrdersPage from './pages/OrdersPage';
+import AccountPage from './pages/AccountPage';
+import AddressPage from './pages/AddressPage';
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -71,6 +73,9 @@ function AppContent() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/account" element={<AccountPage />} />
+          <Route path="/addresses" element={<AddressPage />} />
+
 
           <Route path="/admin/products" element={
             <AdminProtectedRoute>

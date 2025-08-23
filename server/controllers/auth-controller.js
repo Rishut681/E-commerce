@@ -30,12 +30,8 @@ const register = async (req, res) => {
                 userID: data._id.toString(),
             });
     } catch (error) {
-        const register_error = {
-            status: 500,
-            message: error.errors[0].message,
-        }
+        res.status(500).json({ message: error.message });
 
-        next(register_error);
     }
 };
 
@@ -63,22 +59,63 @@ const login = async (req, res) => {
             return res.status(400).json("Invalid credentials");
         }
     } catch (error) {
-        const login_error = {
-            status: 500,
-            message: error.errors[0].message,
-        }
+        res.status(500).json({ message: error.message });
 
-        next(login_error);
     }
 };
 
 const user = async (req, res) => {
     try {
-        const userData = req.user;
-        res.status(200).json({ userData });
-    } catch (error) {
-        console.log(`error from user route ${error}`);
-    }
+    const userData = await User.findById(req.userID).select("-password");
+    if (!userData) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({ user: userData });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch user", error: error.message });
+  }
 };
 
-module.exports = { home, register, login, user };
+const updateUser = async (req, res) => {
+  try {
+    const { name, phone, address } = req.body;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.userID, // comes from authMiddleware
+      { name, phone, address },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!updatedUser) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({ message: "Profile updated", user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update profile", error: error.message });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Current and new password are required" });
+    }
+
+    const user = await User.findById(req.userID);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // verify old password
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) return res.status(400).json({ message: "Incorrect current password" });
+
+    // update to new password
+    user.password = newPassword; // will be hashed by pre('save') hook
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to change password", error: error.message });
+  }
+};
+
+module.exports = { home, register, login, user, updateUser, changePassword };
