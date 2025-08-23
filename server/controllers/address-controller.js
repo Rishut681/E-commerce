@@ -1,59 +1,70 @@
 const User = require("../models/user-model");
 
-// 📌 Get all addresses of logged-in user
+// ✅ Get all addresses
 const getAddresses = async (req, res) => {
   try {
     const user = await User.findById(req.userID).select("addresses");
+    if (!user) return res.status(404).json({ message: "User not found" });
     res.status(200).json({ addresses: user.addresses });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch addresses", error: error.message });
   }
 };
 
-// 📌 Add new address
+// ✅ Add new address
 const addAddress = async (req, res) => {
   try {
-    const { line1, line2, city, state, country, pincode, mobile, type } = req.body;
-
+    const { addressLine1, city, state, country, pincode, mobile, addressType } = req.body;
     const user = await User.findById(req.userID);
-    user.addresses.push({ line1, line2, city, state, country, pincode, mobile, type });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.addresses.push({ addressLine1, city, state, country, pincode, mobile, addressType });
     await user.save();
 
-    res.status(201).json({ message: "Address added successfully", addresses: user.addresses });
+    res.status(200).json({ message: "Address added", userData: user });
   } catch (error) {
     res.status(500).json({ message: "Failed to add address", error: error.message });
   }
 };
 
-// 📌 Update address
+// ✅ Update address
 const updateAddress = async (req, res) => {
   try {
     const { addressId } = req.params;
-    const updates = req.body;
+    const { addressLine1, city, state, country, pincode, mobile, addressType } = req.body;
 
     const user = await User.findById(req.userID);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
     const address = user.addresses.id(addressId);
     if (!address) return res.status(404).json({ message: "Address not found" });
 
-    Object.assign(address, updates);
-    await user.save();
+    address.addressLine1 = addressLine1 || address.addressLine1;
+    address.city = city || address.city;
+    address.state = state || address.state;
+    address.country = country || address.country;
+    address.pincode = pincode || address.pincode;
+    address.mobile = mobile || address.mobile;
+    address.addressType = addressType || address.addressType;
 
-    res.status(200).json({ message: "Address updated", addresses: user.addresses });
+    await user.save();
+    res.status(200).json({ message: "Address updated", userData: user });
   } catch (error) {
     res.status(500).json({ message: "Failed to update address", error: error.message });
   }
 };
 
-// 📌 Delete address
+// ✅ Delete address
 const deleteAddress = async (req, res) => {
   try {
     const { addressId } = req.params;
-
     const user = await User.findById(req.userID);
-    user.addresses = user.addresses.filter((a) => a._id.toString() !== addressId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.addresses = user.addresses.filter((addr) => addr._id.toString() !== addressId);
     await user.save();
 
-    res.status(200).json({ message: "Address deleted", addresses: user.addresses });
+    res.status(200).json({ message: "Address deleted", userData: user });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete address", error: error.message });
   }

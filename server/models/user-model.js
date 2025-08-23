@@ -10,7 +10,7 @@ const addressSchema = new mongoose.Schema({
   country: { type: String, required: true },
   pincode: { type: String, required: true },
   mobile: { type: String, required: true },
-  type: { type: String, enum: ["Home", "Work", "Other"], default: "Home" },
+  addressType: { type: String, enum: ["Home", "Work", "Other"], default: "Home" },
 }, { timestamps: true });
 
 const userSchema = new mongoose.Schema({
@@ -18,12 +18,12 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   phone: { type: String },
-  addresses: [addressSchema],
   role: { type: String, enum: ["customer", "admin"], default: "customer" },
+  addresses: [addressSchema],
 }, { timestamps: true });
 
-// Hashing Pasword encyption using bcrypt.js
 userSchema.pre('save', async function (next) {
+// Hashing Pasword encyption using bcrypt.js
   try {
     if (this.isModified('password')) {
       const saltRounds = 10;

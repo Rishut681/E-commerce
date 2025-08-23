@@ -377,7 +377,7 @@ const AccountPage = () => {
                                 />
                                 <ModalActions>
                                     <DiscardButton type="button" onClick={() => setShowPasswordModal(false)}>Discard</DiscardButton>
-                                    <PrimaryButton type="submit">Save New Password</PrimaryButton>
+                                    <PrimaryButton type="submit">Save Changes</PrimaryButton>
                                 </ModalActions>
                             </form>
                         </Modal>
